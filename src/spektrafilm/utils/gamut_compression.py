@@ -32,6 +32,13 @@ import numpy as np
 from matplotlib.path import Path as MplPath
 from scipy.ndimage import map_coordinates
 
+from spektrafilm.utils.fast_cam16 import (
+    Cam16UcsConditions,
+    _viewing_conditions,
+    cam16ucs_to_xyz,
+    xyz_to_cam16ucs,
+)
+
 
 # ---------------------------------------------------------------------------
 # Spec dataclass
@@ -669,6 +676,10 @@ _JZAZBZ_Y_W_CDM2 = 100.0
 _CAM16UCS_L_A = 64.0
 _CAM16UCS_Y_B = 20.0
 
+# Cache of precomputed CAM16 viewing-condition constants per output
+# colour space (see spektrafilm.utils.fast_cam16).
+_CAM16UCS_CONDITIONS_CACHE: dict[str, Cam16UcsConditions] = {}
+
 
 def _output_cs_whitepoint_xyz(output_color_space: str) -> np.ndarray:
     """The output color space's whitepoint as XYZ at Y=1 — needed as
@@ -1114,6 +1125,21 @@ def _cam16ucs_white_Jp(output_color_space: str) -> float:
     return Jp_w
 
 
+def cam16ucs_conditions(output_color_space: str) -> "Cam16UcsConditions":
+    """Cached :class:`Cam16UcsConditions` for an output colour space.
+
+    Viewing conditions match the gamut compressor's fixed setup
+    (``L_A = 64 cd/m²``, ``Y_b = 20``, Average surround).
+    """
+    global _CAM16UCS_CONDITIONS_CACHE
+    cached = _CAM16UCS_CONDITIONS_CACHE.get(output_color_space)
+    if cached is None:
+        xyz_w = _output_cs_whitepoint_xyz(output_color_space)
+        cached = _viewing_conditions(xyz_w, _CAM16UCS_L_A, _CAM16UCS_Y_B)
+        _CAM16UCS_CONDITIONS_CACHE[output_color_space] = cached
+    return cached
+
+
 def compress_rgb_cam16ucs_chroma(
     rgb: np.ndarray,
     output_color_space: str,
@@ -1136,6 +1162,11 @@ def compress_rgb_cam16ucs_chroma(
     constraint of the three perceptual options — useful when smoothness
     around the blue/cyan arc matters more than bake time.
 
+    The CAM16-UCS conversions run through
+    :mod:`spektrafilm.utils.fast_cam16`, a fused re-implementation of
+    the colour-science chain validated to float64 rounding level; the
+    RGB/XYZ conversions use the colourspace matrices directly.
+
     If ``lightness_compression`` is supplied, a one-sided soft
     compression is applied to ``Jp`` before the chroma step, normalized
     by the output whitepoint's Jp (≈100 under the configured viewing
@@ -1143,17 +1174,11 @@ def compress_rgb_cam16ucs_chroma(
     """
     rgb = np.asarray(rgb, dtype=float)
     cs = colour.RGB_COLOURSPACES[output_color_space]
-    white = np.asarray(cs.whitepoint, dtype=float)
-    xyz_w = _output_cs_whitepoint_xyz(output_color_space)
+    vc = cam16ucs_conditions(output_color_space)
 
     # RGB → XYZ → CAM16-UCS → polar.
-    xyz = np.asarray(colour.RGB_to_XYZ(
-        rgb, colourspace=output_color_space,
-        illuminant=white, apply_cctf_decoding=False,
-    ))
-    jab = np.asarray(colour.XYZ_to_CAM16UCS(
-        xyz, XYZ_w=xyz_w, L_A=_CAM16UCS_L_A, Y_b=_CAM16UCS_Y_B,
-    ))
+    xyz = rgb @ np.asarray(cs.matrix_RGB_to_XYZ).T
+    jab = xyz_to_cam16ucs(xyz, vc)
     Jp = jab[..., 0]
     ap = jab[..., 1]
     bp = jab[..., 2]
@@ -1181,13 +1206,8 @@ def compress_rgb_cam16ucs_chroma(
     ap_new = Cp_new * np.cos(hp)
     bp_new = Cp_new * np.sin(hp)
     jab_new = np.stack([Jp, ap_new, bp_new], axis=-1)
-    xyz_new = np.asarray(colour.CAM16UCS_to_XYZ(
-        jab_new, XYZ_w=xyz_w, L_A=_CAM16UCS_L_A, Y_b=_CAM16UCS_Y_B,
-    ))
-    rgb_new = np.asarray(colour.XYZ_to_RGB(
-        xyz_new, colourspace=output_color_space,
-        illuminant=white, apply_cctf_encoding=False,
-    ))
+    xyz_new = cam16ucs_to_xyz(jab_new, vc)
+    rgb_new = xyz_new @ np.asarray(cs.matrix_XYZ_to_RGB).T
     return rgb_new
 
 

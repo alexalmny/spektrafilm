@@ -10,6 +10,7 @@ from spektrafilm.model.develop import compute_density_spectral
 from spektrafilm.model.glare import add_glare
 from spektrafilm.model.illuminants import standard_illuminant
 from spektrafilm.utils.conversions import density_to_light
+from spektrafilm.utils.fast_conversions import xyz_to_rgb
 from spektrafilm.utils.gamut_compression import compress_rgb
 
 
@@ -76,11 +77,10 @@ class ScanningStage:
         illuminant_xyz = contract("k,kl->l", scan_illuminant, STANDARD_OBSERVER_CMFS[:]) / normalization
         illuminant_xy = colour.XYZ_to_xy(illuminant_xyz)
         xyz = add_glare(xyz, illuminant_xyz, glare)
-        rgb = colour.XYZ_to_RGB(
+        rgb = xyz_to_rgb(
             xyz,
-            colourspace=self._io.output_color_space,
-            apply_cctf_encoding=False,
-            illuminant=illuminant_xy,
+            self._io.output_color_space,
+            illuminant_xy=illuminant_xy,
         )
         # Output gamut compression. Compresses chromaticities the
         # simulation reached that fall outside the output primaries
@@ -129,13 +129,8 @@ class ScanningStage:
 
     def _apply_cctf_encoding(self, rgb: np.ndarray) -> np.ndarray:
         if self._io.output_cctf_encoding:
-            rgb = colour.RGB_to_RGB(
-                rgb,
-                self._io.output_color_space,
-                self._io.output_color_space,
-                apply_cctf_decoding=False,
-                apply_cctf_encoding=True,
-            )
+            cs = colour.RGB_COLOURSPACES[self._io.output_color_space]
+            rgb = cs.cctf_encoding(rgb)
         return rgb
 
 
