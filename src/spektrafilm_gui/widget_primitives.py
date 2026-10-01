@@ -13,7 +13,6 @@ from spektrafilm_gui.theme_palette import (
     SIZE_SECTION_STACK_SPACING,
 )
 from spektrafilm_gui.icons import HEADER_ICON_SIZE, section_header_icon
-from spektrafilm_gui.theme import resolve_theme_qcolor
 
 
 def normalize_ui_text(text: str) -> str:
@@ -132,7 +131,7 @@ class HeaderDivider(QtWidgets.QWidget):
         painter = QtGui.QPainter(self)
         try:
             painter.setRenderHint(QtGui.QPainter.Antialiasing, False)
-            pen = QtGui.QPen(resolve_theme_qcolor(HEADER_DIVIDER_LINE))
+            pen = QtGui.QPen(QtGui.QColor(HEADER_DIVIDER_LINE))
             pen.setCosmetic(True)
             painter.setPen(pen)
             y = (self.height() / 2) + 1

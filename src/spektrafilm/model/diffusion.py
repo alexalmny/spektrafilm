@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.ndimage
 from spektrafilm.utils.fast_gaussian_filter import fast_exponential_filter, fast_gaussian_filter
 from spektrafilm.utils.numba_boost_hightlights import boost_highlights
 
@@ -99,34 +98,6 @@ def apply_gaussian_blur_um(data, sigma_um, pixel_size_um):
     if sigma > 0:
         return fast_gaussian_filter(data, sigma)
     return data
-
-def apply_diffusion_filter_mm(data, diffusion_filter_params, pixel_size_um):
-    diffusion_fraction, sigma_mm, iterations, growth, decay = diffusion_filter_params
-    iterations = int(iterations)
-    sigma = sigma_mm * 1000 / pixel_size_um
-    if sigma_mm <= 0 or sigma <= 0 or diffusion_fraction <= 0 or iterations <= 0:
-        return data
-    
-    max_sigma = sigma * (growth ** max(iterations - 1, 0))
-    image_size = min(data.shape[:2])
-    if max_sigma > image_size / 6:
-        print(f"Warning: diffusion filter size {max_sigma:.1f} pixels is too large for the image size {image_size}. Capping it to {image_size / 6:.1f} pixels.")
-        max_sigma = image_size / 6
-    
-    radius = max(int(np.ceil(max_sigma * 3)), 0)
-    result = np.pad(data, ((radius, radius), (radius, radius), (0, 0)), mode='reflect') if radius > 0 else data.copy()
-    result_fft = np.fft.fft2(result, axes=(0, 1))
-    for _ in range(iterations):
-        blurred_fft = scipy.ndimage.fourier_gaussian(result_fft, sigma=(sigma, sigma, 0))
-        result_fft = diffusion_fraction * blurred_fft + (1 - diffusion_fraction) * result_fft
-        sigma *= growth
-        diffusion_fraction *= decay
-    result = np.fft.ifft2(result_fft, axes=(0, 1)).real
-
-    if radius > 0:
-        return result[radius:-radius, radius:-radius, :]
-    return result
-
 
 from scipy.signal import fftconvolve
 
@@ -257,6 +228,8 @@ _DIFFUSION_FAMILY_TOTAL_GAIN: dict[str, float] = {
     'cinebloom':      1.00,
 }
 
+# Public, ordered view of the supported filter families (single source of
+# truth for the GUI options enum).
 DIFFUSION_FILTER_FAMILIES: tuple[str, ...] = tuple(_DIFFUSION_FILTER_SHAPES)
 
 
@@ -497,46 +470,6 @@ def _radial_components(
     )
 
     return {'core': core, 'halo': halo_channels, 'bloom': bloom}
-
-
-def diffusion_filter_radial_profile(
-    radius_um: np.ndarray,
-    *,
-    family: str = 'black_pro_mist',
-    spatial_scale: float = 1.0,
-    halo_warmth: float = 0.0,
-    overrides: dict | None = None,
-) -> dict[str, np.ndarray]:
-    """Analytic radial profile of the diffusion-filter PSF, unit-normalised in 2D.
-
-    Returns each component contribution in 1/μm**2:
-      - 'core', 'bloom': shape matching `radius_um` (channel-independent).
-      - 'halo': shape (3, *radius_um.shape), one per channel.
-      - 'total_per_channel': shape (3, *radius_um.shape), sum of all three.
-    `halo_warmth` is added to the family base before the channel weights
-    are redistributed. `overrides` accepts the same per-group multiplier
-    keys as `_resolve_family_cfg`.
-    """
-    if family not in _DIFFUSION_FILTER_SHAPES:
-        raise ValueError(f"Unknown diffusion filter family: {family!r}; "
-                         f"available: {list(_DIFFUSION_FILTER_SHAPES)}")
-    cfg = _resolve_family_cfg(family, overrides)
-    effective_warmth = float(cfg.get('halo_warmth_base', 0.0)) + float(halo_warmth)
-    parts = _radial_components(
-        np.asarray(radius_um, dtype=np.float64),
-        family=family,
-        spatial_scale=spatial_scale,
-        pixel_size_um=1.0,
-        halo_warmth=effective_warmth,
-        overrides=overrides,
-    )
-    total_per_channel = parts['halo'] + parts['core'][None, ...] + parts['bloom'][None, ...]
-    return {
-        'core': parts['core'],
-        'halo': parts['halo'],
-        'bloom': parts['bloom'],
-        'total_per_channel': total_per_channel,
-    }
 
 
 def diffusion_filter_psf(

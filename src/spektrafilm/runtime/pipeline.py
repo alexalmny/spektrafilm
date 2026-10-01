@@ -134,7 +134,7 @@ class SimulationPipeline:
     def print_timings(self):
         print(self.format_timings())
 
-    def update(self, params):
+    def update_params(self, params):
         """Update params and re-initialize stages that depend on them."""
         self.__init__(params, update_params=True)
 

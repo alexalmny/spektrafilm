@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from enum import Enum
 
+from spektrafilm.model.diffusion import DIFFUSION_FILTER_FAMILIES
+
 
 class RGBColorSpaces(Enum):
     sRGB = "sRGB"
@@ -45,11 +47,8 @@ class NapariInterpolationModes(Enum):
     blackman = "blackman"
 
 
-class DiffusionFilterFamilies(Enum):
-    glimmerglass = "glimmerglass"
-    black_pro_mist = "black_pro_mist"
-    pro_mist = "pro_mist"
-    cinebloom = "cinebloom"
+# Derived from the model's family table so the GUI can never drift from it.
+DiffusionFilterFamilies = Enum("DiffusionFilterFamilies", {n: n for n in DIFFUSION_FILTER_FAMILIES})
 
 
 class InputGamutCompressAlgorithms(Enum):

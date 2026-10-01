@@ -196,7 +196,6 @@ _DEFAULT_OUT_SUBPATH = Path("build") / "lut_bundles"
 from spektrafilm_lut_creator.naming import (  # noqa: E402
     lut_filename as _lut_filename,
     lut_title as _lut_title,
-    normalize_stock as _normalize_stock,
     normalize_version as _normalize_version,
 )
 

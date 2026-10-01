@@ -19,7 +19,6 @@ class SupportsSectionState(Protocol):
         ...
 
 
-DEFAULT_GUI_STATE = PROJECT_DEFAULT_GUI_STATE
 GUI_STATE_SECTION_NAMES = (
     'display',
     'input_image',
@@ -47,38 +46,24 @@ class SectionStateAccessor:
     set: Callable[[GuiState, object], None]
 
 
-def _top_level_section_accessor(section_name: str) -> SectionStateAccessor:
+# Most sections live at the top level of GuiState; 'display' and 'load_raw'
+# live under `gui_only`.
+_GUI_ONLY_SECTIONS = ('display', 'load_raw')
+
+
+def _section_accessor(section_name: str) -> SectionStateAccessor:
+    if section_name in _GUI_ONLY_SECTIONS:
+        return SectionStateAccessor(
+            get=lambda state, name=section_name: getattr(state.gui_only, name),
+            set=lambda state, value, name=section_name: setattr(state.gui_only, name, value),
+        )
     return SectionStateAccessor(
-        get=lambda state: getattr(state, section_name),
-        set=lambda state, value: setattr(state, section_name, value),
+        get=lambda state, name=section_name: getattr(state, name),
+        set=lambda state, value, name=section_name: setattr(state, name, value),
     )
 
 
-SECTION_STATE_ACCESSORS = {
-    'display': SectionStateAccessor(
-        get=lambda state: state.gui_only.display,
-        set=lambda state, value: setattr(state.gui_only, 'display', value),
-    ),
-    'input_image': _top_level_section_accessor('input_image'),
-    'load_raw': SectionStateAccessor(
-        get=lambda state: state.gui_only.load_raw,
-        set=lambda state, value: setattr(state.gui_only, 'load_raw', value),
-    ),
-    'grain': _top_level_section_accessor('grain'),
-    'preflashing': _top_level_section_accessor('preflashing'),
-    'halation': _top_level_section_accessor('halation'),
-    'couplers': _top_level_section_accessor('couplers'),
-    'chemistry': _top_level_section_accessor('chemistry'),
-    'camera': _top_level_section_accessor('camera'),
-    'enlarger_diffusion': _top_level_section_accessor('enlarger_diffusion'),
-    'camera_diffusion': _top_level_section_accessor('camera_diffusion'),
-    'glare': _top_level_section_accessor('glare'),
-    'scanner': _top_level_section_accessor('scanner'),
-    'input_gamut_compress': _top_level_section_accessor('input_gamut_compress'),
-    'output_gamut_compress': _top_level_section_accessor('output_gamut_compress'),
-    'special': _top_level_section_accessor('special'),
-    'simulation': _top_level_section_accessor('simulation'),
-}
+SECTION_STATE_ACCESSORS = {name: _section_accessor(name) for name in GUI_STATE_SECTION_NAMES}
 
 
 def _get_stateful_widget(widgets: WidgetBundle, section_name: str) -> SupportsSectionState:
@@ -115,7 +100,7 @@ def collect_gui_state(
     *,
     widgets: WidgetBundle,
 ) -> GuiState:
-    gui_state = clone_gui_state(DEFAULT_GUI_STATE)
+    gui_state = clone_gui_state(PROJECT_DEFAULT_GUI_STATE)
     for section_name in GUI_STATE_SECTION_NAMES:
         _set_section_state(gui_state, section_name, _get_stateful_widget(widgets, section_name).get_state())
     gui_state.simulation.workflow.auto_preview = widgets.simulation.auto_preview_value()

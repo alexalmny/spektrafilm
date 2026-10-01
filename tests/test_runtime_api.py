@@ -20,56 +20,6 @@ class TestRuntimeApi:
 
         np.testing.assert_allclose(new_result, direct_result, atol=1e-12)
 
-    def test_update_params_delegates_to_pipeline_without_public_state(self, monkeypatch):
-        class FakePipeline:
-            def __init__(self, params):
-                self.label = params.label
-                self.timings = {'label': params.label}
-
-            def process(self, image):
-                return f'processed-{self.label}-{image}'
-
-            def update(self, params):
-                self.label = params.label
-                self.timings = {'label': params.label}
-
-        monkeypatch.setattr(process_module, 'SimulationPipeline', FakePipeline)
-        initial_params = SimpleNamespace(label='initial')
-        updated_params = SimpleNamespace(label='updated')
-
-        simulator = process_module.Simulator(initial_params)
-        assert not hasattr(simulator, 'camera')
-        assert not hasattr(simulator, 'timings')
-        assert not hasattr(simulator, 'update')
-
-        simulator.update_params(updated_params)
-
-        assert simulator.process('frame') == 'processed-updated-frame'
-
-    def test_soft_update_delegates_to_pipeline(self, monkeypatch):
-        captured_kwargs = {}
-
-        class FakePipeline:
-            def __init__(self, params):
-                self.label = params.label
-                self.timings = {'label': params.label}
-
-            def process(self, image):
-                return image
-
-            def soft_update(self, **kwargs):
-                captured_kwargs.update(kwargs)
-
-        monkeypatch.setattr(process_module, 'SimulationPipeline', FakePipeline)
-        simulator = process_module.Simulator(SimpleNamespace(label='initial'))
-
-        simulator.soft_update(print_exposure=1.5, exposure_compensation_ev=-0.25)
-
-        assert captured_kwargs == {
-            'print_exposure': 1.5,
-            'exposure_compensation_ev': -0.25,
-        }
-
     def test_soft_update_keeps_print_exposure_compensation_consistent_with_rebuild(self, default_params):
         params = copy.deepcopy(default_params)
         params.camera.auto_exposure = False
@@ -121,7 +71,7 @@ class TestRuntimeApi:
             def print_timings(self):
                 print(self.format_timings())
 
-        monkeypatch.setattr(process_module, 'SimulationPipeline', FakePipeline)
+        monkeypatch.setattr(process_module, 'Simulator', FakePipeline)
         ticks = iter((10.0, 10.1234))
         monkeypatch.setattr(pipeline_module, 'perf_counter', lambda: next(ticks))
 

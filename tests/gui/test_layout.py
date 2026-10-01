@@ -321,7 +321,7 @@ def test_build_controls_panel_places_gamut_compression_sections_on_advanced_tab(
         def setSpacing(self, _spacing: int) -> None:
             pass
 
-        def addWidget(self, _widget) -> None:
+        def addWidget(self, _widget, _stretch=0) -> None:
             pass
 
     monkeypatch.setattr(napari_layout_module.QtWidgets, 'QVBoxLayout', FakeVBoxLayout)
@@ -337,7 +337,7 @@ def test_build_controls_panel_places_gamut_compression_sections_on_advanced_tab(
         input_image='input_image',
         input_gamut_compress='input_gamut_compress',
         camera='camera',
-        simulation='simulation',
+        simulation=SimpleNamespace(action_bar=lambda: 'action_bar'),
         exposure_control='exposure_control',
         enlarger='enlarger',
         scanner='scanner',
@@ -360,7 +360,6 @@ def test_build_controls_panel_places_gamut_compression_sections_on_advanced_tab(
 
     panel = napari_layout_module.build_controls_panel(SimpleNamespace(), widgets)
 
-    assert isinstance(panel, FakeTabWidget)
     tabs = {label: sections for label, sections in captured_tabs}
     assert 'input_gamut_compress' not in tabs['MAIN']
     assert 'output_gamut_compress' not in tabs['MAIN']

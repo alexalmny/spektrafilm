@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field, is_dataclass, replace
 from typing import Any, TypeVar
 
@@ -222,50 +223,14 @@ class GuiState:
 
 
 def clone_state_section(section: StateSection) -> StateSection:
+    """Deep-copy a state section (all fields are scalars or nested dataclasses)."""
     if not is_dataclass(section):
         raise TypeError('Expected a dataclass instance to clone.')
-    if isinstance(section, InputImageState):
-        return replace(section, io=replace(section.io), settings=replace(section.settings))
-    if isinstance(section, SpecialState):
-        return replace(section, film_render=replace(section.film_render))
-    if isinstance(section, SimulationState):
-        return replace(
-            section,
-            selection=replace(section.selection),
-            enlarger=replace(section.enlarger),
-            io=replace(section.io),
-            workflow=replace(section.workflow),
-        )
-    if isinstance(section, DisplayState):
-        return replace(section, settings=replace(section.settings))
-    if isinstance(section, GuiOnlyState):
-        return replace(
-            section,
-            load_raw=replace(section.load_raw),
-            display=clone_state_section(section.display),
-        )
-    return replace(section)
+    return copy.deepcopy(section)
 
 
 def clone_gui_state(state: GuiState) -> GuiState:
-    return GuiState(
-        input_image=clone_state_section(state.input_image),
-        grain=clone_state_section(state.grain),
-        preflashing=clone_state_section(state.preflashing),
-        halation=clone_state_section(state.halation),
-        couplers=clone_state_section(state.couplers),
-        chemistry=clone_state_section(state.chemistry),
-        camera=clone_state_section(state.camera),
-        enlarger_diffusion=clone_state_section(state.enlarger_diffusion),
-        camera_diffusion=clone_state_section(state.camera_diffusion),
-        glare=clone_state_section(state.glare),
-        scanner=clone_state_section(state.scanner),
-        input_gamut_compress=clone_state_section(state.input_gamut_compress),
-        output_gamut_compress=clone_state_section(state.output_gamut_compress),
-        special=clone_state_section(state.special),
-        simulation=clone_state_section(state.simulation),
-        gui_only=clone_state_section(state.gui_only),
-    )
+    return copy.deepcopy(state)
 
 
 def gui_state_from_params(

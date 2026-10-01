@@ -26,7 +26,6 @@ from spektrafilm_gui.theme_palette import (
     BOOL_EDITOR_FILL_ENABLED,
     BOOL_EDITOR_HOVER_BG,
 )
-from spektrafilm_gui.theme import resolve_theme_qcolor
 
 
 @lru_cache(maxsize=None)
@@ -212,13 +211,13 @@ class BoolEditor(QtWidgets.QCheckBox):
             indicator_rect = self._indicator_rect()
             is_enabled = self.isEnabled()
             is_hovered = is_enabled and self.underMouse()
-            fill_color = resolve_theme_qcolor(
+            fill_color = QtGui.QColor(
                 BOOL_EDITOR_HOVER_BG if is_hovered else BOOL_EDITOR_FILL_ENABLED if is_enabled else BOOL_EDITOR_FILL_DISABLED,
             )
-            checked_color = resolve_theme_qcolor(
+            checked_color = QtGui.QColor(
                 BOOL_EDITOR_HOVER_BG if is_hovered else BOOL_EDITOR_CHECKED_ENABLED if is_enabled else BOOL_EDITOR_CHECKED_DISABLED,
             )
-            border_color = resolve_theme_qcolor(BOOL_EDITOR_BORDER_CHECKED if self.isChecked() else BOOL_EDITOR_BORDER_UNCHECKED)
+            border_color = QtGui.QColor(BOOL_EDITOR_BORDER_CHECKED if self.isChecked() else BOOL_EDITOR_BORDER_UNCHECKED)
 
             painter.setPen(QtGui.QPen(border_color, 1))
             painter.setBrush(checked_color if self.isChecked() else fill_color)
@@ -243,7 +242,7 @@ class BoolEditor(QtWidgets.QCheckBox):
     @staticmethod
     def _draw_check_mark(painter: QtGui.QPainter, indicator_rect) -> None:
         painter.setPen(
-            QtGui.QPen(resolve_theme_qcolor(BOOL_EDITOR_CHECKMARK), 1.6, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin),
+            QtGui.QPen(QtGui.QColor(BOOL_EDITOR_CHECKMARK), 1.6, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin),
         )
         painter.drawLine(
             QPointF(indicator_rect.left() + 3.0, indicator_rect.center().y() + 0.5),

@@ -1,5 +1,4 @@
 import numpy as np
-import skimage.transform
 
 def crop_image(image, center=(0.5,0.5), size=(0.1, 0.1)):
     """

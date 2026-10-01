@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from spektrafilm.runtime.params_schema import RuntimePhotoParams
 from spektrafilm.runtime.pipeline import SimulationPipeline
 from spektrafilm.utils.preview import resize_for_preview
 from spektrafilm.runtime.params_builder import (
@@ -10,44 +9,9 @@ from spektrafilm.runtime.params_builder import (
     init_params,
 )
 
-class Simulator:
-    """User-facing wrapper around the runtime simulation pipeline.
-    The params passed to the constructor should be static and not be changed.
-    They can be refreshed with update_params or soft_update, which delegate to the internal pipeline.
-    """
-
-    def __init__(self, params: RuntimePhotoParams):
-        self._pipeline = SimulationPipeline(params) # should stay private
-
-    def process(self, image):
-        """Process the input image through the simulation pipeline and return the final result."""
-        return self._pipeline.process(image)
-
-    def update_params(self, params):
-        """Update the parameters of the simulation pipeline."""
-        self._pipeline.update(params)
-
-    def soft_update(self, **kwargs):
-        """Soft update parameters by only changing the provided fields, keeping the rest unchanged.
-        only selected safe parameters can be updated with this method
-        """
-        self._pipeline.soft_update(**kwargs)
-
-    def get_timings(self):
-        """Get the timings of the different stages of the simulation pipeline."""
-        return self._pipeline.get_timings()
-
-    def get_total_elapsed_time(self):
-        """Get the total wall-clock time of the last process call."""
-        return self._pipeline.get_total_elapsed_time()
-
-    def format_timings(self):
-        """Format the last recorded timings for display."""
-        return self._pipeline.format_timings()
-
-    def print_timings(self):
-        """Print the formatted timings of the last process call."""
-        self._pipeline.print_timings()
+# Public name for the pipeline. Kept as an alias rather than a wrapper:
+# every Simulator method used to forward 1:1 to SimulationPipeline.
+Simulator = SimulationPipeline
 
 
 ######################################################################################

@@ -3,7 +3,7 @@ from datetime import date
 from importlib.metadata import PackageNotFoundError, version as distribution_version
 import importlib.resources as pkg_resources
 import json
-from dataclasses import dataclass, field, is_dataclass, replace
+from dataclasses import dataclass, field, is_dataclass
 from typing import Any, Mapping
 
 import numpy as np
@@ -180,21 +180,6 @@ class Profile:
     def clone(self) -> 'Profile':
         return copy.deepcopy(self)
 
-    def update_info(self, **changes) -> 'Profile':
-        self.info = replace(self.info, **changes)
-        return self
-
-    def update_data(self, **changes) -> 'Profile':
-        self.data = replace(self.data, **changes)
-        return self
-
-    def update(self, *, info=None, data=None) -> 'Profile':
-        if info:
-            self.update_info(**info)
-        if data:
-            self.update_data(**data)
-        return self
-
     def hanatos2025_adaptation(self) -> Hanatos2025SensitivityAdaptation:
         return Hanatos2025SensitivityAdaptation(
             window_params=self.data.hanatos2025_adaptation_window_params,
@@ -211,28 +196,12 @@ class Profile:
         return self.info.type == 'negative'
 
     @property
-    def is_paper(self) -> bool:
-        return self.info.support == 'paper'
-
-    @property
     def is_film(self) -> bool:
         return self.info.support == 'film'
     
     @property
     def is_color(self) -> bool:
         return self.info.channel_model == 'color'
-    
-    @property
-    def is_bw(self) -> bool:
-        return self.info.channel_model == 'bw'
-
-    @property
-    def is_filming(self) -> bool:
-        return self.info.stage == 'filming'
-
-    @property
-    def is_printing(self) -> bool:
-        return self.info.stage == 'printing'
 
     @property
     def is_still(self) -> bool:

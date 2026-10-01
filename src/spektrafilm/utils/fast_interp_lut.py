@@ -144,18 +144,6 @@ def _cubic_interp_lut_at_3d(lut, r, g, b):
     return out
 
 
-def cubic_interp_lut_at_3d(lut, r, g, b):
-    """
-    Performs cubic interpolation at a single point (r, g, b) in a 3D LUT (shape: LxLxLx3)
-    using reflected boundary handling.
-    """
-    visible_size = lut.shape[0]
-    if visible_size == 0:
-        raise ValueError('3D LUT must not be empty')
-    if visible_size == 1:
-        return _constant_lut_value_3d(lut)
-    return _cubic_interp_lut_at_3d(lut, r, g, b)
-
 @njit(parallel=True, cache=True)
 def _apply_lut_constant_3d(lut, image):
     height, width, _ = image.shape
@@ -543,16 +531,6 @@ def _cubic_interp_lut_at_2d(lut, x, y):
             out[c] /= weight_sum
     return out
 
-
-def cubic_interp_lut_at_2d(lut, x, y):
-    """
-    Performs cubic interpolation at a single point (x, y) in a 2D LUT (shape: LxLxC)
-    using reflected boundary handling.
-    """
-    visible_size = lut.shape[0]
-    if visible_size < 2:
-        return linear_interp_lut_at_2d(lut, x, y)
-    return _cubic_interp_lut_at_2d(lut, x, y)
 
 def apply_lut_cubic_2d(lut, image):
     """
