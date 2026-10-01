@@ -1,20 +1,62 @@
-name: Release
+name: Test and Release
 
-# Tag-triggered release: push a tag like v0.3.4 and this builds the
-# sdist + wheel and publishes them as a GitHub release with
-# auto-generated notes. Upstream has no release automation, so this
-# replaces the manual tag + hand-made release process.
+# Two jobs, in order:
+#
+#   test    — full test suite (runs on every push to main and on tag
+#             pushes). Gates the release: no release is cut unless the
+#             suite is green.
+#   release — build sdist + wheel and publish a GitHub release. Only
+#             runs for v* tags, and only after the test job passes.
+#
+# Exclusions in CI (both run fine locally on the platform that
+# generated the baselines):
+#   tests/gui                      — needs PySide6 + a display; the
+#                                    released wheel targets all
+#                                    platforms, GUI wiring is verified
+#                                    on dev machines, not CI.
+#   tests/test_regression_baselines.py — the committed .npz snapshots
+#                                    encode the exact libm/numba
+#                                    rounding of the machine that
+#                                    generated them (Ubuntu 22.04
+#                                    aarch64). On other platforms the
+#                                    print-side perceptual path
+#                                    (CAM16 pow/log1p) drifts at
+#                                    7e-3..5e-2 — a platform artifact,
+#                                    not a regression. These stay a
+#                                    local-development tripwire; if you
+#                                    change pipeline math, regenerate
+#                                    them and inspect the diff.
 
 on:
   push:
+    branches: ["main"]
     tags: ["v*"]
 
-permissions:
-  contents: write
-
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install package and test deps
+        run: python -m pip install ".[dev]"
+
+      - name: Run test suite
+        run: >
+          python -m pytest tests/ -q
+          --ignore=tests/gui
+          --ignore=tests/test_regression_baselines.py
+
+  release:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
