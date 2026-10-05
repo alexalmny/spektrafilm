@@ -63,13 +63,15 @@ def run_topology(
     image: Any,
     *,
     on_fire: Callable[[Node, float], None] | None = None,
+    on_write: Callable[[Node, dict[str, Any]], None] | None = None,
 ) -> Any:
     """Walk ``topology`` in declared order, firing every node whose reads
     are satisfied. Stops as soon as ``collect`` is in state and returns it.
 
     ``on_fire`` is invoked as ``on_fire(node, elapsed_seconds)`` after each
     node fires; the dispatcher in :class:`SimulationPipeline` uses it to
-    record per-node timings.
+    record per-node timings. ``on_write`` can snapshot completed taps before
+    the next node consumes their arrays.
     """
     state: dict[str, Any] = {inject: image}
     for node in topology:
@@ -77,6 +79,8 @@ def run_topology(
             t0 = perf_counter()
             node.fire(state)
             elapsed = perf_counter() - t0
+            if on_write is not None:
+                on_write(node, state)
             if on_fire is not None:
                 on_fire(node, elapsed)
             if collect in state:

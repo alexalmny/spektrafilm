@@ -13,6 +13,7 @@ from spektrafilm.runtime.services import (
 )
 from spektrafilm.runtime.stages import FilmingStage, PrintingStage, ScanningStage
 from spektrafilm.runtime.topology import Node, Tap, run_topology
+from spektrafilm.utils import gpu
 from spektrafilm.utils.timings import format_timings
 
 
@@ -97,6 +98,9 @@ class SimulationPipeline:
         self._lut_service.timings = self.timings
 
         self._topology: list[Node] = self._build_topology()
+        self._cached_taps: dict[str, np.ndarray] = {}
+        self._cached_input: np.ndarray | None = None
+        self._cache_allowed_through = len(self._topology) - 2
 
     def process(self, image, *, inject: str | None = None, collect: str | None = None):
         """Run the pipeline.
@@ -118,6 +122,69 @@ class SimulationPipeline:
             )
         finally:
             self._last_elapsed_time = perf_counter() - start
+
+    def process_cached(self, image, *, reuse_through: str | None = None):
+        """Render end-to-end, optionally reusing an unchanged prefix of taps.
+
+        ``reuse_through`` explicitly certifies that the image and parameters
+        feeding the named tap have not changed. For a scanner-only change use
+        ``Tap.CMY_PRINT`` (or ``Tap.CMY_FILM`` in scan-film mode). Omit it to
+        run the full pipeline. The input is checked by value, including
+        in-place edits. Direct mutations of stage parameters are *not*
+        observable: callers must specify a conservative tap after such edits.
+        ``soft_update`` automatically limits which cached taps are eligible.
+        Cached arrays consume roughly one image per intermediate tap; use
+        ``clear_cache`` to release them.
+        """
+        if (self.taps.inject not in (None, Tap.RGB_IN)
+                or self.taps.collect not in (None, Tap.RGB_OUT)):
+            raise ValueError("process_cached requires rgb_in → rgb_out topology")
+        available = [node.writes[0] for node in self._topology[:-1]]
+        if reuse_through is not None and reuse_through not in available:
+            raise ValueError(f"invalid reusable tap: {reuse_through!r}")
+        if reuse_through is not None and available.index(reuse_through) > self._cache_allowed_through:
+            raise ValueError("cached tap was invalidated by soft_update")
+
+        input_array = np.asarray(image)
+        same_input = (self._cached_input is not None
+                      and np.array_equal(input_array, self._cached_input, equal_nan=True))
+        if not same_input:
+            self.clear_cache()
+        if reuse_through is not None and same_input and reuse_through in self._cached_taps:
+            inject = reuse_through
+            source = self._cached_taps[inject].copy()
+            new_cache = {tap: value for tap, value in self._cached_taps.items()
+                         if available.index(tap) <= available.index(inject)}
+        else:
+            inject = Tap.RGB_IN
+            source = image
+            new_cache = {}
+
+        def snapshot(node, state):
+            for tap in node.writes:
+                if tap in available:
+                    new_cache[tap] = np.array(state[tap], copy=True)
+
+        self.timings.clear()
+        start = perf_counter()
+        try:
+            with gpu.use(getattr(self.settings, "gpu", False)):
+                result = run_topology(
+                    self._topology, inject, Tap.RGB_OUT, source,
+                    on_fire=self._record_node_timing, on_write=snapshot,
+                )
+        finally:
+            self._last_elapsed_time = perf_counter() - start
+        self._cached_taps = new_cache
+        self._cached_input = np.array(input_array, copy=True)
+        self._cache_allowed_through = len(available) - 1
+        return result
+
+    def clear_cache(self):
+        """Discard cached image/taps (required after untracked parameter edits)."""
+        self._cached_taps = {}
+        self._cached_input = None
+        self._cache_allowed_through = len(self._topology) - 2
 
     def get_timings(self):
         return self.timings
@@ -168,6 +235,17 @@ class SimulationPipeline:
                 self._enlarger_service.density_spectral_midgray,
                 self._enlarger_service.density_spectral_midgray_comp,
             ) = self._filming_stage._compute_density_spectral_midgray_to_balance_print()
+
+        # Prevent an incremental render from using a prefix that a known
+        # parameter edit may have changed. Film-profile edits can influence
+        # filming reference corrections, so invalidate from the first stage.
+        if exposure_compensation_ev is not None or film_density_curves is not None:
+            self._cache_allowed_through = min(self._cache_allowed_through, 0)  # rgb_pre
+        elif any(v is not None for v in (
+            print_exposure, c_filter_neutral, m_filter_neutral,
+            y_filter_neutral, print_density_curves,
+        )):
+            self._cache_allowed_through = min(self._cache_allowed_through, 2)  # cmy_film
 
     # private methods
 
