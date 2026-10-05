@@ -818,6 +818,35 @@ def test_process_image_with_runtime_reuses_cached_simulator(monkeypatch) -> None
     np.testing.assert_allclose(second, image_second + 0.1)
 
 
+def test_runtime_scanner_only_edit_uses_cached_taps(monkeypatch, default_params, small_rgb_image) -> None:
+    import copy
+
+    controller = GuiController(viewer=object(), widgets=object())
+    monkeypatch.setattr(controller_module, 'digest_params', lambda p, **kw: copy.deepcopy(p))
+    params = copy.deepcopy(default_params)
+    controller._process_image_with_runtime(small_rgb_image, params)
+    simulator = controller._runtime_simulator
+    updates = []
+    original_update = simulator.update_params
+
+    def counted_update(p):
+        updates.append(True)
+        return original_update(p)
+
+    monkeypatch.setattr(simulator, 'update_params', counted_update)
+    params.scanner.unsharp_mask = (0.0, 0.0)
+    params.scanner.lens_blur = 0.5
+    cached = controller._process_image_with_runtime(small_rgb_image, params)
+    assert updates == []
+    assert 'filming.develop' not in simulator.get_timings()
+    np.testing.assert_array_equal(cached, simulator.process(small_rgb_image))
+
+    params.enlarger.print_exposure *= 1.2
+    controller._process_image_with_runtime(small_rgb_image, params)
+    assert updates == [True]
+    assert 'filming.develop' in simulator.get_timings()
+
+
 def test_process_image_with_runtime_reapplies_stock_specific_digest_after_profile_change(monkeypatch) -> None:
     controller = GuiController(viewer=object(), widgets=object())
     params = object()

@@ -3,6 +3,8 @@ from __future__ import annotations
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
+from dataclasses import is_dataclass, replace
+import pickle
 
 import numpy as np
 from qtpy import QtCore, QtWidgets
@@ -149,6 +151,7 @@ class GuiController:
         self._active_simulation_worker: runtime.SimulationWorker | None = None
         self._active_simulation_label: str | None = None
         self._runtime_simulator = None
+        self._runtime_prefix_signature: bytes | None = None
         self._next_runtime_digest_applies_stock_specifics = True
         self._current_input_image: np.ndarray | None = None
         self._current_input_path: str | None = None
@@ -626,6 +629,22 @@ class GuiController:
             pil_image_module=PILImage,
         )
 
+    @staticmethod
+    def _scanner_prefix_signature(params) -> bytes | None:
+        """Snapshot all render inputs except scanner-only spatial settings.
+
+        A bytewise match is deliberately conservative: differing pickle
+        representations merely cost a full render, never a stale cache hit.
+        Only fields known to affect the final scanner stage are excluded.
+        """
+        if not is_dataclass(params) or not is_dataclass(getattr(params, 'scanner', None)):
+            return None
+        try:
+            scanner = replace(params.scanner, lens_blur=0.0, unsharp_mask=(0.0, 0.0))
+            return pickle.dumps(replace(params, scanner=scanner), protocol=5)
+        except (TypeError, ValueError, pickle.PickleError):
+            return None
+
     def _process_image_with_runtime(self, image_data: np.ndarray, params) -> np.ndarray:
         apply_stocks_specifics = (
             self._runtime_simulator is None
@@ -635,15 +654,36 @@ class GuiController:
             params,
             apply_stocks_specifics=apply_stocks_specifics,
         )
+        signature = self._scanner_prefix_signature(digested_params)
         try:
-            if self._runtime_simulator is None:
-                self._runtime_simulator = runtime_simulator(digested_params)
+            can_reuse = (
+                self._runtime_simulator is not None
+                and not apply_stocks_specifics
+                and signature is not None
+                and signature == self._runtime_prefix_signature
+                and callable(getattr(self._runtime_simulator, 'process_cached', None))
+            )
+            if can_reuse:
+                # Both references point to the stage's scanner parameter
+                # object; no other runtime parameter may have changed.
+                self._runtime_simulator.scanner.lens_blur = digested_params.scanner.lens_blur
+                self._runtime_simulator.scanner.unsharp_mask = digested_params.scanner.unsharp_mask
+                from spektrafilm.runtime.topology import Tap
+                through = Tap.CMY_FILM if digested_params.io.scan_film else Tap.CMY_PRINT
+                result = self._runtime_simulator.process_cached(image_data, reuse_through=through)
             else:
-                self._runtime_simulator.update_params(digested_params)
+                if self._runtime_simulator is None:
+                    self._runtime_simulator = runtime_simulator(digested_params)
+                else:
+                    self._runtime_simulator.update_params(digested_params)
+                render = getattr(self._runtime_simulator, 'process_cached', None)
+                result = render(image_data) if callable(render) else self._runtime_simulator.process(image_data)
+            self._runtime_prefix_signature = signature
             self._next_runtime_digest_applies_stock_specifics = False
-            return self._runtime_simulator.process(image_data)
+            return result
         except Exception:
             self._runtime_simulator = None
+            self._runtime_prefix_signature = None
             raise
 
     def _set_display_transform_checked(self, enabled: bool) -> None:
