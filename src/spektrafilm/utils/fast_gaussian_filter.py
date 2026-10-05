@@ -311,6 +311,13 @@ def _gpu_gaussian_filter(image, sigma, truncate=3.0):
         blurred = cpnd.correlate1d(blurred, weights, axis=1, mode="reflect")
         return cp.asnumpy(blurred)
 
+    # One pair of spatial passes can process every channel when their
+    # kernels are identical. The channel axis is never filtered.
+    if np.all(channels == channels[0]):
+        weights = cp.asarray(_gaussian_kernel_1d(float(channels[0]), truncate)[0])
+        blurred = cpnd.correlate1d(dev_image, weights, axis=0, mode="reflect")
+        return cp.asnumpy(cpnd.correlate1d(blurred, weights, axis=1, mode="reflect"))
+
     output = cp.empty_like(dev_image)
     kernel_cache = {}
     for ch, sig in enumerate(channels):

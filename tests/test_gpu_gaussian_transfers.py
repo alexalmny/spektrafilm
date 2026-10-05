@@ -10,7 +10,7 @@ from spektrafilm.utils.fast_gaussian_filter import _gpu_gaussian_filter, _gaussi
 
 
 def test_gpu_gaussian_copies_image_once(monkeypatch):
-    transfers = {"image_in": 0, "image_out": 0}
+    transfers = {"image_in": 0, "image_out": 0, "passes": 0}
 
     def asarray(array):
         if np.ndim(array) > 1:
@@ -26,7 +26,11 @@ def test_gpu_gaussian_copies_image_once(monkeypatch):
     monkeypatch.setitem(sys.modules, "cupyx", types.ModuleType("cupyx"))
     monkeypatch.setitem(sys.modules, "cupyx.scipy", types.ModuleType("cupyx.scipy"))
     fake_ndimage = types.ModuleType("cupyx.scipy.ndimage")
-    fake_ndimage.correlate1d = correlate1d
+    def count_pass(*args, **kwargs):
+        transfers["passes"] += 1
+        return correlate1d(*args, **kwargs)
+
+    fake_ndimage.correlate1d = count_pass
     monkeypatch.setitem(sys.modules, "cupyx.scipy.ndimage", fake_ndimage)
 
     rng = np.random.default_rng(5)
@@ -39,4 +43,12 @@ def test_gpu_gaussian_copies_image_once(monkeypatch):
         tmp = correlate1d(image[:, :, ch], kernel, axis=0, mode="reflect")
         expected[:, :, ch] = correlate1d(tmp, kernel, axis=1, mode="reflect")
     np.testing.assert_allclose(result, expected, rtol=0, atol=0)
-    assert transfers == {"image_in": 1, "image_out": 1}
+    assert transfers == {"image_in": 1, "image_out": 1, "passes": 6}
+
+    transfers.update(image_in=0, image_out=0, passes=0)
+    result = _gpu_gaussian_filter(image, 1.3)
+    kernel, _ = _gaussian_kernel_1d(1.3, 3.0)
+    expected = correlate1d(image, kernel, axis=0, mode="reflect")
+    expected = correlate1d(expected, kernel, axis=1, mode="reflect")
+    np.testing.assert_allclose(result, expected, rtol=0, atol=0)
+    assert transfers == {"image_in": 1, "image_out": 1, "passes": 2}
