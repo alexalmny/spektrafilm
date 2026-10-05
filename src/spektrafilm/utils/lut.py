@@ -1,5 +1,5 @@
 import numpy as np
-from spektrafilm.utils.fast_interp_lut import apply_lut_3d, apply_lut_cubic_2d
+from spektrafilm.utils.fast_interp_lut import apply_lut_3d, apply_lut_cubic_2d, apply_prepared_lut_pchip_3d
 
 def _as_channel_bounds(bounds):
     bounds_array = np.asarray(bounds, dtype=np.float64)
@@ -30,7 +30,7 @@ def _create_lut_3d(function, xmin=(0.0, 0.0, 0.0), xmax=(1.0, 1.0, 1.0), steps=3
 #     lut = np.reshape(function(X), (steps, steps, 3))
 #     return lut
 
-def compute_with_lut(data, function, xmin=(0.0, 0.0, 0.0), xmax=(1.0, 1.0, 1.0), steps=32, lut=None):
+def compute_with_lut(data, function, xmin=(0.0, 0.0, 0.0), xmax=(1.0, 1.0, 1.0), steps=32, lut=None, *, prepared_lut=None):
     # Computes the function on the data using a 3D LUT for acceleration.
     # The data is assumed to be in the range [xmin, xmax] and will be normalized for LUT indexing.
     # The lut is created on the fly in the range [xmin, xmax] with the specified number of steps.
@@ -40,8 +40,12 @@ def compute_with_lut(data, function, xmin=(0.0, 0.0, 0.0), xmax=(1.0, 1.0, 1.0),
     if np.any(xmax <= xmin):
         raise ValueError('xmax must be greater than xmin')
     if lut is None:
+        if prepared_lut is not None:
+            raise ValueError('prepared_lut requires a lut')
         lut = _create_lut_3d(function, xmin, xmax, steps)
     data_normalized = (data - xmin) / (xmax - xmin)
+    if prepared_lut is not None:
+        return apply_prepared_lut_pchip_3d(prepared_lut, data_normalized), lut
     return apply_lut_3d(lut, data_normalized), lut
 
 def warmup_luts():

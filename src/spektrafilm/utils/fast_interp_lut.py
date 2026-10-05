@@ -465,15 +465,17 @@ def _apply_lut_pchip_3d_prepared(lut, slope_x, slope_y, slope_z, cell_min, cell_
             output[i, j, 2] = out_val[2]
     return output
 
-def apply_lut_pchip_3d(lut, image):
-    """
-    Apply the PCHIP 3D LUT path using precomputed per-axis slopes.
-    Pass the tuple returned by prepare_lut_pchip_3d().
-    """
-    lut, slope_x, slope_y, slope_z, cell_min, cell_max = prepare_lut_pchip_3d(lut)
+def apply_prepared_lut_pchip_3d(prepared, image):
+    """Apply a LUT previously prepared by :func:`prepare_lut_pchip_3d`."""
+    lut, slope_x, slope_y, slope_z, cell_min, cell_max = prepared
     if lut.shape[0] == 1:
         return _apply_lut_constant_3d(lut, image)
     return _apply_lut_pchip_3d_prepared(lut, slope_x, slope_y, slope_z, cell_min, cell_max, image)
+
+
+def apply_lut_pchip_3d(lut, image):
+    """Apply a PCHIP 3D LUT; prepare on each call for uncached callers."""
+    return apply_prepared_lut_pchip_3d(prepare_lut_pchip_3d(lut), image)
 
 
 #########################

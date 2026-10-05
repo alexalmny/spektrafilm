@@ -6,6 +6,7 @@ import numpy as np
 from spektrafilm.profiles.io import Hanatos2025SensitivityAdaptation
 from spektrafilm.utils.gamut_compression import InputGamutCompressSpec
 from spektrafilm.utils.lut import compute_with_lut
+from spektrafilm.utils.fast_interp_lut import prepare_lut_pchip_3d
 from spektrafilm.utils.spectral_upsampling import compute_hanatos2025_tc_lut
 from spektrafilm.utils.timings import timeit
 
@@ -25,6 +26,12 @@ class SpectralLUTService:
         self.filming_tc_lut_memory : np.ndarray | None = None # tc_lut memory
         self.enlarger_lut_memory : np.ndarray | None = None # enlarger lut memory
         self.scanner_lut_memory : np.ndarray | None = None # scanner lut memory
+        # PCHIP slopes and cell bounds belong to the exact LUT object; do
+        # not reuse them after an external LUT replacement or a rebuild.
+        self._enlarger_prepared = None
+        self._enlarger_prepared_source = None
+        self._scanner_prepared = None
+        self._scanner_prepared_source = None
 
         # local memory
         self._film_sensitivity = None # to track if tc_lut needs to be recomputed when film sensitivity changes
@@ -107,12 +114,16 @@ class SpectralLUTService:
             and self._enlarger_test_results_memory is not None
             and np.array_equal(test_results, self._enlarger_test_results_memory)
         ):
+            if self._enlarger_prepared_source is not self.enlarger_lut_memory:
+                self._enlarger_prepared = prepare_lut_pchip_3d(self.enlarger_lut_memory)
+                self._enlarger_prepared_source = self.enlarger_lut_memory
             data_out, _ = compute_with_lut(cmy_data,
                                            spectral_calculation,
                                            xmin=data_min,
                                            xmax=data_max,
                                            steps=self._lut_resolution,
-                                           lut=self.enlarger_lut_memory)
+                                           lut=self.enlarger_lut_memory,
+                                           prepared_lut=self._enlarger_prepared)
         else:
             data_out, lut = compute_with_lut(cmy_data,
                                              spectral_calculation,
@@ -120,6 +131,8 @@ class SpectralLUTService:
                                              xmax=data_max,
                                              steps=self._lut_resolution)
             self.enlarger_lut_memory = lut
+            self._enlarger_prepared = None
+            self._enlarger_prepared_source = None
             self._enlarger_test_results_memory = np.array(test_results, copy=True)
 
         if data_out is None:
@@ -145,12 +158,16 @@ class SpectralLUTService:
             and self._scanner_test_results_memory is not None
             and np.array_equal(test_results, self._scanner_test_results_memory)
         ):
+            if self._scanner_prepared_source is not self.scanner_lut_memory:
+                self._scanner_prepared = prepare_lut_pchip_3d(self.scanner_lut_memory)
+                self._scanner_prepared_source = self.scanner_lut_memory
             data_out, _ = compute_with_lut(cmy_data,
                                            spectral_calculation,
                                            xmin=data_min,
                                            xmax=data_max,
                                            steps=self._lut_resolution,
-                                           lut=self.scanner_lut_memory)
+                                           lut=self.scanner_lut_memory,
+                                           prepared_lut=self._scanner_prepared)
         else:
             data_out, lut = compute_with_lut(cmy_data,
                                              spectral_calculation,
@@ -158,6 +175,8 @@ class SpectralLUTService:
                                              xmax=data_max,
                                              steps=self._lut_resolution)
             self.scanner_lut_memory = lut
+            self._scanner_prepared = None
+            self._scanner_prepared_source = None
             self._scanner_test_results_memory = np.array(test_results, copy=True)
 
         if data_out is None:
