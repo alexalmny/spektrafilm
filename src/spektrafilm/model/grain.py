@@ -26,7 +26,6 @@ def layer_particle_model(density,
     probability_of_development = np.clip(probability_of_development, 1e-6, 1-1e-6) # for safe calc
     od_particle = density_max/n_particles_per_pixel
     
-    grain = np.zeros_like(density)
     if method=='gamma_beta':
         gamma_rvs = scipy.stats.gamma.rvs
         beta_rvs = scipy.stats.beta.rvs
@@ -44,6 +43,9 @@ def layer_particle_model(density,
         seeds = poisson_rvs(n_particles_per_pixel/saturation)
         grain = binom_rvs(seeds, probability_of_development)
         grain = np.double(grain)*od_particle*saturation
+    else:
+        # Preserve the historical zero result for unsupported methods.
+        grain = np.zeros_like(density)
     
     if blur_particle>0:
         # grain = scipy.ndimage.gaussian_filter(grain, blur_particle*np.sqrt(od_particle))
