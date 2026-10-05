@@ -6,6 +6,7 @@ import numpy as np
 from scipy.ndimage import correlate1d
 
 from spektrafilm.utils import gpu
+import spektrafilm.utils.fast_gaussian_filter as gaussian
 from spektrafilm.utils.fast_gaussian_filter import _gpu_gaussian_filter, _gaussian_kernel_1d
 
 
@@ -52,3 +53,14 @@ def test_gpu_gaussian_copies_image_once(monkeypatch):
     expected = correlate1d(expected, kernel, axis=1, mode="reflect")
     np.testing.assert_allclose(result, expected, rtol=0, atol=0)
     assert transfers == {"image_in": 1, "image_out": 1, "passes": 2}
+
+
+def test_large_or_mixed_sigma_preserves_cpu_iir(monkeypatch):
+    """Even with GPU requested, large sigma cannot silently change filters."""
+    monkeypatch.setattr(gpu, "active", lambda: True)
+    monkeypatch.setattr(gaussian, "_gpu_gaussian_filter", lambda *a, **kw: "gpu")
+    monkeypatch.setattr(gaussian, "_apply_per_channel", lambda *a, **kw: "cpu")
+    image = np.zeros((512, 512, 3))
+    assert gaussian.fast_gaussian_filter(image, 1.2) == "gpu"
+    assert gaussian.fast_gaussian_filter(image, [1.2, 3.0, 1.2]) == "cpu"
+    assert gaussian.fast_gaussian_filter(image, 6.0) == "cpu"

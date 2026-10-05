@@ -272,12 +272,9 @@ def _gpu_gaussian_filter(image, sigma, truncate=3.0):
 
     Separable FIR via ``cupyx.scipy.ndimage.correlate1d`` with the same
     normalized 1D kernel the CPU FIR path builds (mode='reflect' has the
-    exact boundary semantics the numba helper implements). For sigma >=
-    SMALL_SIGMA_MAX the CPU path switches to a Young-van Vliet IIR;
-    the GPU path stays FIR at every sigma — parallel-unfriendly
-    recursion avoided, and the FIR result is *closer* to the analytic
-    Gaussian than the IIR it replaces (max deviation vs CPU ~1e-3
-    relative, vs analytic ~1e-12).
+    exact boundary semantics the numba helper implements). Only dispatch
+    small sigma to this path: the CPU uses a different IIR algorithm for
+    sigma >= SMALL_SIGMA_MAX, so replacing it with FIR changes the image.
     """
     import cupyx.scipy.ndimage as cpnd
 
@@ -332,17 +329,20 @@ def _gpu_gaussian_filter(image, sigma, truncate=3.0):
 def fast_gaussian_filter(image, sigma, truncate=3.0):
     """Per-channel 2D Gaussian filter (mode='reflect').
 
-    Dispatches to the GPU path when the GPU context is active and the
-    image is large enough to amortize host/device transfers.
+    Dispatches small-sigma FIR to the GPU when requested and the image is
+    large enough to amortize host/device transfers. Large-sigma IIR remains
+    on CPU to preserve the original algorithm and avoid wide GPU FIR kernels.
 
     Auto-dispatches by sigma: small-sigma fused FIR for sigma < 3, recursive
     IIR (Young-van Vliet) for sigma >= 3. Pass truncate=4.0 for the
     SciPy-equivalent FIR kernel width on the small-sigma path.
     """
-    # GPU path — only when enabled and big enough to amortize the two
-    # host/device copies. ponytail: single size threshold for all blurs;
-    # lower it if small-image previews measurably lag on a GPU box.
-    if gpu.active() and np.shape(image)[0] * np.shape(image)[1] >= _GPU_MIN_PIXELS:
+    # A single IIR channel must not be silently replaced with FIR. For
+    # mixed sigmas keep every channel on CPU rather than splitting the image.
+    # The size crossover is provisional until measured on actual hardware.
+    if (np.all(np.asarray(sigma) < SMALL_SIGMA_MAX)
+            and np.shape(image)[0] * np.shape(image)[1] >= _GPU_MIN_PIXELS
+            and gpu.active()):
         return _gpu_gaussian_filter(image, sigma, truncate)
     return _apply_per_channel(image, sigma, truncate, _dispatch_2d)
 
