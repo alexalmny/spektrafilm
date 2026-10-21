@@ -63,7 +63,14 @@ class TestNumpyPathUnchanged:
             ref["rgb"], "sRGB", threshold=0.8, limit=0.97, power=2.2,
             lightness_compression=(0.7, 1.0, 2.2),
         )
-        assert np.array_equal(out, ref["out"], equal_nan=True)
+        # This fixture was generated on ARM64. BLAS/libm on the x86 CI
+        # runner may differ in the final float64 bits; exact equality is
+        # only meaningful on an identical platform/toolchain. Preserve
+        # the NaN mask and a tight, platform-independent numeric bound.
+        np.testing.assert_array_equal(np.isnan(out), np.isnan(ref["out"]))
+        np.testing.assert_allclose(
+            out, ref["out"], rtol=1e-12, atol=1e-12, equal_nan=True,
+        )
 
     def test_gaussian_numpy_path_returns_numpy(self):
         img = _random_rgb((64, 80, 3), seed=3)
