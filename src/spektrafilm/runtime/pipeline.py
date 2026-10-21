@@ -116,10 +116,11 @@ class SimulationPipeline:
         self.timings.clear()
         start = perf_counter()
         try:
-            return run_topology(
-                self._topology, inject, collect, image,
-                on_fire=self._record_node_timing,
-            )
+            with gpu.use(self.settings.gpu):
+                return run_topology(
+                    self._topology, inject, collect, image,
+                    on_fire=self._record_node_timing,
+                )
         finally:
             self._last_elapsed_time = perf_counter() - start
 

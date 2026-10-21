@@ -48,6 +48,12 @@ dev = [
     "pytest",
     "opencolorio~=2.5",   # PyOpenColorIO; validates emitted config.ocio files
 ]
+# Optional GPU acceleration (settings.gpu=True). Pick the wheel that
+# matches your CUDA driver: cupy-cuda12x for CUDA 12.x, cupy-cuda11x for
+# CUDA 11.x (see https://docs.cupy.dev — ROCm: cupy-rocm on Linux).
+gpu = [
+    "cupy-cuda12x",
+]
 
 [project.scripts]
 spektrafilm = "spektrafilm_gui.app:main"

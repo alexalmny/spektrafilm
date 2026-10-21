@@ -32,6 +32,7 @@ import numpy as np
 from matplotlib.path import Path as MplPath
 from scipy.ndimage import map_coordinates
 
+from spektrafilm.utils import gpu
 from spektrafilm.utils.fast_cam16 import (
     Cam16UcsConditions,
     _viewing_conditions,
@@ -664,6 +665,11 @@ _OUTPUT_CMAX_CACHE: dict[
     tuple[str, str], tuple[np.ndarray, np.ndarray, np.ndarray]
 ] = {}
 
+# Device (CuPy) copies of the c_max tables, keyed like _OUTPUT_CMAX_CACHE.
+# Filled lazily on the first GPU lookup per (space, colorspace); host
+# tables stay the source of truth.
+_DEVICE_CMAX_CACHE: dict[tuple[str, str], tuple] = {}
+
 # JzAzBz operates on absolute XYZ in cd/m². For SDR output we anchor
 # diffuse white at 100 cd/m² — pixels at linear RGB=1.0 correspond to
 # Y = 100 cd/m². Configurable in future via spec; constant for now.
@@ -1211,6 +1217,127 @@ def compress_rgb_cam16ucs_chroma(
     return rgb_new
 
 
+def _reinhard_knee_xp(d, *, threshold, limit, power, xp):
+    """Device-friendly (mask-free) equivalent of :func:`reinhard_knee`.
+
+    Same formula as the masked CPU version for every input: where
+    ``d > threshold`` the identical knee arithmetic applies; elsewhere
+    the input passes through. Computing the knee unconditionally with
+    ``fmax(d - threshold, 0)`` keeps the whole op elementwise — no
+    boolean gather/scatter, no host synchronization on the GPU.
+    """
+    scale = limit - threshold
+    x = xp.fmax(d - threshold, 0.0) / scale
+    y = x / xp.power(1.0 + xp.power(x, power), 1.0 / power)
+    return xp.where(d > threshold, threshold + scale * y, d)
+
+
+def _device_c_max_table(space: str, output_color_space: str, xp):
+    """(L_grid, h_grid, C_max_table) cached on the device."""
+    key = (space, output_color_space)
+    tables = _DEVICE_CMAX_CACHE.get(key)
+    if tables is None:
+        L_grid, h_grid, c_table = _get_output_c_max_table(space, output_color_space)
+        tables = (xp.asarray(L_grid), xp.asarray(h_grid), xp.asarray(c_table))
+        _DEVICE_CMAX_CACHE[key] = tables
+    return tables
+
+
+def _c_max_lookup_xp(L, h, L_grid, h_grid, C_max_table, xp):
+    """Device mirror of :func:`_c_max_lookup` (same bilinear math)."""
+    L = xp.clip(L, L_grid[0], L_grid[-1])
+    h_step = h_grid[1] - h_grid[0]
+    h_idx = (h - h_grid[0]) / h_step
+    h_lo = xp.floor(h_idx).astype(int) % len(h_grid)
+    h_hi = (h_lo + 1) % len(h_grid)
+    h_frac = h_idx - xp.floor(h_idx)
+
+    L_idx = (L - L_grid[0]) / (L_grid[-1] - L_grid[0]) * (len(L_grid) - 1)
+    L_lo = xp.clip(xp.floor(L_idx).astype(int), 0, len(L_grid) - 2)
+    L_hi = L_lo + 1
+    L_frac = L_idx - L_lo
+
+    v00 = C_max_table[L_lo, h_lo]
+    v01 = C_max_table[L_lo, h_hi]
+    v10 = C_max_table[L_hi, h_lo]
+    v11 = C_max_table[L_hi, h_hi]
+    return (
+        v00 * (1 - L_frac) * (1 - h_frac)
+        + v01 * (1 - L_frac) * h_frac
+        + v10 * L_frac * (1 - h_frac)
+        + v11 * L_frac * h_frac
+    )
+
+
+def _compress_rgb_cam16ucs_chroma_gpu(
+    rgb: np.ndarray,
+    output_color_space: str,
+    *,
+    threshold: float,
+    limit: float,
+    power: float,
+    lightness_compression: tuple[float, float, float] | None = None,
+) -> np.ndarray:
+    """GPU (CuPy) twin of :func:`compress_rgb_cam16ucs_chroma`.
+
+    Float64 end to end, replaying the CPU operation sequence through the
+    same validated :mod:`spektrafilm.utils.fast_cam16` code (which is
+    xp-aware). Host → device → host transfers are two copies of the
+    RGB payload; the C_max tables and colourspace matrices are cached
+    on the device across calls.
+    """
+    import cupy as cp
+
+    xp = cp
+    cs = colour.RGB_COLOURSPACES[output_color_space]
+    vc = cam16ucs_conditions(output_color_space)
+
+    rgb_dev = xp.asarray(np.ascontiguousarray(rgb, dtype=np.float64))
+
+    # RGB → XYZ → CAM16-UCS → polar.
+    xyz = rgb_dev @ xp.asarray(np.asarray(cs.matrix_RGB_to_XYZ)).T
+    jab = xyz_to_cam16ucs(xyz, vc)
+    Jp = jab[..., 0]
+    ap = jab[..., 1]
+    bp = jab[..., 2]
+
+    if lightness_compression is not None:
+        Jp = _compress_lightness_xp(
+            Jp, params=lightness_compression,
+            L_white=_cam16ucs_white_Jp(output_color_space), xp=xp,
+        )
+
+    Cp = xp.hypot(ap, bp)
+    hp = xp.arctan2(bp, ap)
+
+    L_grid, h_grid, c_table = _device_c_max_table("cam16ucs", output_color_space, xp)
+    Cp_max = _c_max_lookup_xp(Jp, hp, L_grid, h_grid, c_table, xp)
+    safe_Cp_max = xp.fmax(Cp_max, 1e-9)
+    d_norm = Cp / safe_Cp_max
+    d_compressed = _reinhard_knee_xp(
+        d_norm, threshold=threshold, limit=limit, power=power, xp=xp,
+    )
+    Cp_new = d_compressed * safe_Cp_max
+
+    # JpCphp → CAM16-UCS → XYZ → RGB.
+    ap_new = Cp_new * xp.cos(hp)
+    bp_new = Cp_new * xp.sin(hp)
+    jab_new = xp.stack([Jp, ap_new, bp_new], axis=-1)
+    xyz_new = cam16ucs_to_xyz(jab_new, vc)
+    rgb_new = xyz_new @ xp.asarray(np.asarray(cs.matrix_XYZ_to_RGB)).T
+    return cp.asnumpy(rgb_new)
+
+
+def _compress_lightness_xp(L, *, params, L_white, xp):
+    """Device mirror of :func:`_compress_lightness`."""
+    threshold, limit, power = params
+    L_norm = L / L_white
+    L_norm = _reinhard_knee_xp(
+        L_norm, threshold=threshold, limit=limit, power=power, xp=xp,
+    )
+    return L_norm * L_white
+
+
 def compress_rgb(
     rgb: np.ndarray,
     spec: "OutputGamutCompressSpec",
@@ -1240,6 +1367,16 @@ def compress_rgb(
     if spec.algorithm == "aces_rgc":
         return compress_rgb_aces_rgc(
             rgb, threshold=threshold, limit=limit, power=power,
+        )
+    if spec.algorithm == "cam16ucs" and gpu.active():
+        if output_color_space is None:
+            raise ValueError(
+                f"output_color_space is required when algorithm={spec.algorithm!r}"
+            )
+        return _compress_rgb_cam16ucs_chroma_gpu(
+            rgb, output_color_space,
+            threshold=threshold, limit=limit, power=power,
+            lightness_compression=spec.lightness_compression,
         )
     perceptual_fns = {
         "oklch": compress_rgb_oklch_chroma,

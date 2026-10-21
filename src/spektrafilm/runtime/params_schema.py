@@ -230,6 +230,9 @@ class SettingsParams:
     preview_max_size: int = 640
     preview_mode: bool = False
     neutral_print_filters_from_database: bool = True
+    # GPU acceleration (optional CuPy/CUDA backend). Off by default: the
+    # CPU path stays bit-identical and regression baselines stay valid.
+    gpu: bool = False
     
 
 @dataclass

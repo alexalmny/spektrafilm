@@ -32,6 +32,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from spektrafilm.utils.gpu import get_array_module
+
 # CAT16 forward matrix (colour.science: colour.appearance.cam16 MATRIX_16).
 _MATRIX_16 = np.array(
     [
@@ -41,6 +43,21 @@ _MATRIX_16 = np.array(
     ]
 )
 _MATRIX_16_INV = np.linalg.inv(_MATRIX_16)
+
+# Device-side copies of the two matrices, cached per array-module
+# (numpy passes through; cupy gets one asarray per backend).
+_XP_MATRIX_CACHE: dict = {}
+
+
+def _matrix16_pair(xp):
+    """(MATRIX_16, MATRIX_16_INV) as arrays on ``xp``'s device, cached."""
+    if xp is np:
+        return _MATRIX_16, _MATRIX_16_INV
+    pair = _XP_MATRIX_CACHE.get(id(xp))
+    if pair is None:
+        pair = (xp.asarray(_MATRIX_16), xp.asarray(_MATRIX_16_INV))
+        _XP_MATRIX_CACHE[id(xp)] = pair
+    return pair
 
 # CAM16-UCS coefficients (Li et al. 2017, "CAM02-UCS" set).
 _UCS_C1 = 0.007
@@ -61,9 +78,10 @@ _P3 = 21.0 / 20.0
 _EPSILON = 2.220446049250313e-16
 
 
-def _spow(a: np.ndarray, p: float) -> np.ndarray:
+def _spow(a, p):
     """Sign-preserving power, matching colour.science's ``spow``."""
-    return np.sign(a) * np.abs(a) ** p
+    xp = get_array_module(a)
+    return xp.sign(a) * xp.abs(a) ** p
 
 
 @dataclass(frozen=True)
@@ -130,15 +148,17 @@ def _viewing_conditions(xyz_w: np.ndarray, la: float, y_b: float) -> Cam16UcsCon
 
 def _response_compression_forward(rgb: np.ndarray, fl: float) -> np.ndarray:
     """Post-adaptation non-linear response compression (forward)."""
-    fl_rgb = _spow(fl * np.abs(rgb) / 100.0, 0.42)
-    return (400.0 * np.sign(rgb) * fl_rgb) / (27.13 + fl_rgb) + 0.1
+    xp = get_array_module(rgb)
+    fl_rgb = _spow(fl * xp.abs(rgb) / 100.0, 0.42)
+    return (400.0 * xp.sign(rgb) * fl_rgb) / (27.13 + fl_rgb) + 0.1
 
 
 def _response_compression_inverse(rgb_a: np.ndarray, fl: float) -> np.ndarray:
     """Post-adaptation non-linear response compression (inverse)."""
-    delta = np.abs(rgb_a - 0.1)
+    xp = get_array_module(rgb_a)
+    delta = xp.abs(rgb_a - 0.1)
     return (
-        np.sign(rgb_a - 0.1)
+        xp.sign(rgb_a - 0.1)
         * 100.0
         / fl
         * _spow((27.13 * delta) / (400.0 - delta), 1.0 / 0.42)
@@ -150,19 +170,25 @@ def xyz_to_cam16ucs(xyz: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
 
     Matches :func:`colour.XYZ_to_CAM16UCS` at reference domain-range
     scale with Average surround, ``discount_illuminant=False``.
-    """
-    xyz100 = np.asarray(xyz, dtype=np.float64) * 100.0
 
-    rgb = xyz100 @ _MATRIX_16.T
-    rgb_a = _response_compression_forward(vc.d_rgb * rgb, vc.fl)
+    Works with host numpy arrays and device (CuPy) arrays alike; the
+    operation sequence is identical on both backends.
+    """
+    xp = get_array_module(xyz)
+    m16, _ = _matrix16_pair(xp)
+    xyz100 = xp.asarray(xyz, dtype=np.float64) * 100.0
+
+    rgb = xyz100 @ m16.T
+    d_rgb = xp.asarray(vc.d_rgb)
+    rgb_a = _response_compression_forward(d_rgb * rgb, vc.fl)
 
     r, g, b = rgb_a[..., 0], rgb_a[..., 1], rgb_a[..., 2]
     a = r - 12.0 * g / 11.0 + b / 11.0
     b_dim = (r + g - 2.0 * b) / 9.0
 
-    h = np.degrees(np.arctan2(b_dim, a)) % 360.0
-    h_rad = np.radians(h)
-    e_t = 0.25 * (np.cos(2.0 + h_rad) + 3.8)
+    h = xp.degrees(xp.arctan2(b_dim, a)) % 360.0
+    h_rad = xp.radians(h)
+    e_t = 0.25 * (xp.cos(2.0 + h_rad) + 3.8)
 
     achro = (2.0 * r + g + b / 20.0 - 0.305) * vc.n_bb
     j = 100.0 * _spow(achro / vc.a_w, vc.c_z)
@@ -170,18 +196,18 @@ def xyz_to_cam16ucs(xyz: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
     # t = (50000/13) * N_c * N_cb * e_t * |ab| / (Ra + Ga + 21 * Ba / 20)
     denom = r + g + 21.0 * b / 20.0
     with np.errstate(divide="ignore", invalid="ignore"):
-        t = (50000.0 / 13.0) * _SURROUND_N_C * vc.n_cb * e_t * np.sqrt(
+        t = (50000.0 / 13.0) * _SURROUND_N_C * vc.n_cb * e_t * xp.sqrt(
             a * a + b_dim * b_dim
         ) / denom
         chroma = _spow(t, 0.9) * _spow(j / 100.0, 0.5) * vc.n_pow
     m = chroma * vc.fl_025
 
     j_p = (1.0 + 100.0 * _UCS_C1) * j / (1.0 + _UCS_C1 * j)
-    m_p = np.log1p(_UCS_C2 * m) / _UCS_C2
-    a_p = m_p * np.cos(h_rad)
-    b_p = m_p * np.sin(h_rad)
+    m_p = xp.log1p(_UCS_C2 * m) / _UCS_C2
+    a_p = m_p * xp.cos(h_rad)
+    b_p = m_p * xp.sin(h_rad)
 
-    return np.stack([j_p, a_p, b_p], axis=-1)
+    return xp.stack([j_p, a_p, b_p], axis=-1)
 
 
 def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
@@ -189,27 +215,32 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
 
     Matches :func:`colour.CAM16UCS_to_XYZ` at reference domain-range
     scale with Average surround, ``discount_illuminant=False``.
+
+    Works with host numpy arrays and device (CuPy) arrays alike; the
+    operation sequence is identical on both backends.
     """
-    jab = np.asarray(jab, dtype=np.float64)
+    xp = get_array_module(jab)
+    _, m16_inv = _matrix16_pair(xp)
+    jab = xp.asarray(jab, dtype=np.float64)
     j_p = jab[..., 0]
     a_p = jab[..., 1]
     b_p = jab[..., 2]
 
     # UCS -> JMh
     j = -j_p / (_UCS_C1 * j_p - 1.0 - 100.0 * _UCS_C1)
-    m_p = np.hypot(a_p, b_p)
-    h = np.degrees(np.arctan2(b_p, a_p)) % 360.0
-    m = np.expm1(_UCS_C2 * m_p) / _UCS_C2
+    m_p = xp.hypot(a_p, b_p)
+    h = xp.degrees(xp.arctan2(b_p, a_p)) % 360.0
+    m = xp.expm1(_UCS_C2 * m_p) / _UCS_C2
 
     # JMh -> XYZ (CAM16 inverse)
     c = m / vc.fl_025
-    h_rad = np.radians(h)
-    e_t = 0.25 * (np.cos(2.0 + h_rad) + 3.8)
+    h_rad = xp.radians(h)
+    e_t = 0.25 * (xp.cos(2.0 + h_rad) + 3.8)
 
-    j_safe = np.maximum(j, _EPSILON)
+    j_safe = xp.maximum(j, _EPSILON)
     with np.errstate(divide="ignore", invalid="ignore"):
         t = _spow(
-            c / (np.sqrt(j_safe / 100.0) * vc.n_pow),
+            c / (xp.sqrt(j_safe / 100.0) * vc.n_pow),
             1.0 / 0.9,
         )
     achro = vc.a_w * _spow(j / 100.0, vc.inv_c_z)
@@ -217,8 +248,8 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
     p_1 = (50000.0 / 13.0) * _SURROUND_N_C * vc.n_cb * e_t / t
     p_2 = achro / vc.n_bb + 0.305
 
-    sin_hr = np.sin(h_rad)
-    cos_hr = np.cos(h_rad)
+    sin_hr = xp.sin(h_rad)
+    cos_hr = xp.cos(h_rad)
     with np.errstate(divide="ignore", invalid="ignore"):
         cos_over_sin = cos_hr / sin_hr
         sin_over_cos = sin_hr / cos_hr
@@ -229,10 +260,10 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
         # Two complementary (for non-NaN) masks, mirroring colour.science:
         # a NaN hue satisfies neither, so a/b stay 0 — matching the
         # reference implementation's fall-through to zeros.
-        sin_dominates = np.abs(sin_hr) >= np.abs(cos_hr)
-        cos_dominates = np.abs(sin_hr) < np.abs(cos_hr)
+        sin_dominates = xp.abs(sin_hr) >= xp.abs(cos_hr)
+        cos_dominates = xp.abs(sin_hr) < xp.abs(cos_hr)
 
-        b_dim = np.where(
+        b_dim = xp.where(
             sin_dominates,
             n_qty
             / (
@@ -243,8 +274,8 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
             ),
             0.0,
         )
-        a = np.where(sin_dominates, b_dim * cos_over_sin, 0.0)
-        a = np.where(
+        a = xp.where(sin_dominates, b_dim * cos_over_sin, 0.0)
+        a = xp.where(
             cos_dominates,
             n_qty
             / (
@@ -254,16 +285,16 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
             ),
             a,
         )
-        b_dim = np.where(cos_dominates, a * sin_over_cos, b_dim)
+        b_dim = xp.where(cos_dominates, a * sin_over_cos, b_dim)
 
     # t == 0 -> zero opponent dimensions (matches colour's masking).
-    ab_mask = np.where(t == 0.0, 0.0, 1.0)
+    ab_mask = xp.where(t == 0.0, 0.0, 1.0)
     a = a * ab_mask
     b_dim = b_dim * ab_mask
 
     # matrix_post_adaptation_non_linear_response_compression
     rgb_a = (
-        np.stack(
+        xp.stack(
             [
                 460.0 * p_2 + 451.0 * a + 288.0 * b_dim,
                 460.0 * p_2 - 891.0 * a - 261.0 * b_dim,
@@ -275,6 +306,6 @@ def cam16ucs_to_xyz(jab: np.ndarray, vc: Cam16UcsConditions) -> np.ndarray:
     )
 
     rgb_c = _response_compression_inverse(rgb_a, vc.fl)
-    rgb = rgb_c / vc.d_rgb
-    xyz100 = rgb @ _MATRIX_16_INV.T
+    rgb = rgb_c / xp.asarray(vc.d_rgb)
+    xyz100 = rgb @ m16_inv.T
     return xyz100 / 100.0
