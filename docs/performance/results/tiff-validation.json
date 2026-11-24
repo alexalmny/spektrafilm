@@ -1,0 +1,70 @@
+{
+  "before/24mp.tif": {
+    "dimensions": [
+      6000,
+      4000,
+      3
+    ],
+    "format": "uint16",
+    "icc_bytes": 1276,
+    "icc_sha256": "cbb4f91217dee4e8ad1a2bbfb6271f401f7747a530076c99a5f6fb8316dc105a",
+    "exif": {
+      "Exif.Image.Software": "spektrafilm",
+      "Exif.Image.Orientation": "1",
+      "Exif.Photo.ColorSpace": "65535",
+      "Exif.Photo.PixelXDimension": "6000",
+      "Exif.Photo.PixelYDimension": "4000"
+    }
+  },
+  "after-cpu/24mp.tif": {
+    "dimensions": [
+      6000,
+      4000,
+      3
+    ],
+    "format": "uint16",
+    "icc_bytes": 1276,
+    "icc_sha256": "cbb4f91217dee4e8ad1a2bbfb6271f401f7747a530076c99a5f6fb8316dc105a",
+    "exif": {
+      "Exif.Image.Software": "spektrafilm",
+      "Exif.Image.Orientation": "1",
+      "Exif.Photo.ColorSpace": "65535",
+      "Exif.Photo.PixelXDimension": "6000",
+      "Exif.Photo.PixelYDimension": "4000"
+    }
+  },
+  "after-cuda/24mp-fp32.tif": {
+    "dimensions": [
+      6000,
+      4000,
+      3
+    ],
+    "format": "uint16",
+    "icc_bytes": 1276,
+    "icc_sha256": "cbb4f91217dee4e8ad1a2bbfb6271f401f7747a530076c99a5f6fb8316dc105a",
+    "exif": {
+      "Exif.Image.Software": "spektrafilm",
+      "Exif.Image.Orientation": "1",
+      "Exif.Photo.ColorSpace": "65535",
+      "Exif.Photo.PixelXDimension": "6000",
+      "Exif.Photo.PixelYDimension": "4000"
+    }
+  },
+  "after-cuda/24mp-fp64.tif": {
+    "dimensions": [
+      6000,
+      4000,
+      3
+    ],
+    "format": "uint16",
+    "icc_bytes": 1276,
+    "icc_sha256": "cbb4f91217dee4e8ad1a2bbfb6271f401f7747a530076c99a5f6fb8316dc105a",
+    "exif": {
+      "Exif.Image.Software": "spektrafilm",
+      "Exif.Image.Orientation": "1",
+      "Exif.Photo.ColorSpace": "65535",
+      "Exif.Photo.PixelXDimension": "6000",
+      "Exif.Photo.PixelYDimension": "4000"
+    }
+  }
+}

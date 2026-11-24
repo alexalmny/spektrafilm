@@ -1,0 +1,440 @@
+{
+  "commit": "67f4204c5c1716fa2d7f755ea3c8bf4b8feff7c1",
+  "tracked_worktree_dirty": true,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.13.14",
+  "packages": {
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "colour-science": "0.4.7",
+    "numba": "0.68.1",
+    "rawpy": "0.26.1",
+    "OpenImageIO": "3.1.19.0",
+    "psutil": "7.2.2",
+    "threadpoolctl": "3.8.0",
+    "spektrafilm": "0.3.4"
+  },
+  "cpu": "AMD Ryzen 7 5800X 8-Core Processor",
+  "cpu_physical": 8,
+  "cpu_logical": 16,
+  "ram_bytes": 34282233856,
+  "gpu": "NVIDIA GeForce RTX 3070, 610.62, 8192 MiB",
+  "threads_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "8"
+  },
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "libscipy_openblas64_-4e39871015dc1470c682dc512497ee22.dll",
+      "version": "0.3.34.237.2",
+      "threading_layer": "pthreads",
+      "architecture": "Haswell"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+      "version": "0.3.31.dev",
+      "threading_layer": "pthreads",
+      "architecture": "Haswell"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 8,
+      "prefix": "vcomp",
+      "filepath": "vcomp140.dll",
+      "version": null
+    }
+  ],
+  "numba_threads": 8,
+  "numba_threading_layer": "omp",
+  "numba_cache": {
+    "location": "explicit",
+    "files_before": 0
+  },
+  "options": {
+    "case": "preview640",
+    "mode": "print",
+    "change": "repeat",
+    "warm": 1,
+    "blas_threads": 1,
+    "numba_threads": 8,
+    "update": false,
+    "deterministic": true,
+    "grain_off": false,
+    "halation_off": false,
+    "display": false,
+    "export": false,
+    "reference": true
+  },
+  "input": {
+    "kind": "TIFF",
+    "sha256": "deb9ed6e03313212d92ed4d7e21fda9e52f4b51aa54ac0423b59055c1a32c920",
+    "source_shape": [
+      640,
+      400,
+      3
+    ],
+    "engine_shape": [
+      640,
+      400,
+      3
+    ],
+    "engine_dtype": "float32",
+    "load_seconds": 0.007963100000779377,
+    "resize_seconds": 9.399998816661537e-06
+  },
+  "configurations": {
+    "0": {
+      "film": "kodak_gold_200",
+      "print": "kodak_supra_endura",
+      "film_render": {
+        "density_curve_gamma": 1.0,
+        "grain": {
+          "active": false,
+          "sublayers_active": true,
+          "particle_area_um2": 0.0,
+          "particle_scale": [
+            1.6,
+            1.6,
+            3.2
+          ],
+          "particle_scale_layers": [
+            2.0,
+            1.0,
+            0.5
+          ],
+          "density_min": [
+            0.03,
+            0.03,
+            0.03
+          ],
+          "uniformity": [
+            0.97,
+            0.99,
+            0.97
+          ],
+          "blur": 0.0,
+          "blur_dye_clouds_um": 1.0,
+          "micro_structure": [
+            0.2,
+            30
+          ],
+          "n_sub_layers": 1
+        },
+        "halation": {
+          "active": true,
+          "scatter_amount": 1.0,
+          "scatter_spatial_scale": 1.0,
+          "halation_amount": 1.0,
+          "halation_spatial_scale": 1.0,
+          "scatter_core_um": [
+            2.2,
+            2.0,
+            1.6
+          ],
+          "scatter_tail_um": [
+            9.3,
+            9.7,
+            9.1
+          ],
+          "scatter_tail_weight": [
+            0.78,
+            0.65,
+            0.67
+          ],
+          "boost_ev": 0.0,
+          "boost_range": 0.3,
+          "protect_ev": 4.0,
+          "halation_strength": [
+            0.08,
+            0.02,
+            0.0
+          ],
+          "halation_first_sigma_um": [
+            65.0,
+            65.0,
+            65.0
+          ],
+          "halation_n_bounces": 3,
+          "halation_bounce_decay": 0.5,
+          "halation_renormalize": true
+        },
+        "dir_couplers": {
+          "active": true,
+          "amount": 1.0,
+          "inhibition_samelayer": 1.0,
+          "inhibition_interlayer": 1.0,
+          "gamma_samelayer_rgb": [
+            0.336,
+            0.319,
+            0.273
+          ],
+          "gamma_interlayer_r_to_gb": [
+            0.353,
+            0.302
+          ],
+          "gamma_interlayer_g_to_rb": [
+            0.154,
+            0.353
+          ],
+          "gamma_interlayer_b_to_rg": [
+            0.168,
+            0.226
+          ],
+          "diffusion_size_um": 0.0,
+          "diffusion_tail_um": 200.0,
+          "diffusion_tail_weight": 0.06
+        },
+        "glare": {
+          "active": true,
+          "percent": 0.03,
+          "roughness": 0.7,
+          "blur": 0.5
+        }
+      },
+      "print_render": {
+        "glare": {
+          "active": false,
+          "percent": 0.03,
+          "roughness": 0.7,
+          "blur": 0.0
+        },
+        "density_curves_morph": {
+          "active": false,
+          "gamma_factor": 1.0,
+          "gamma_factor_fast": 1.0,
+          "gamma_factor_slow": 1.0,
+          "gamma_factor_red": 1.0,
+          "gamma_factor_green": 1.0,
+          "gamma_factor_blue": 1.0,
+          "developer_exhaustion": 0.0
+        }
+      },
+      "camera": {
+        "exposure_compensation_ev": 0.0,
+        "auto_exposure": true,
+        "auto_exposure_method": "center_weighted",
+        "lens_blur_um": 0.0,
+        "film_format_mm": 35.0,
+        "filter_uv": [
+          0.0,
+          410.0,
+          8.0
+        ],
+        "filter_ir": [
+          0.0,
+          675.0,
+          15.0
+        ],
+        "diffusion_filter": {
+          "active": false,
+          "filter_family": "black_pro_mist",
+          "strength": 0.5,
+          "spatial_scale": 1.0,
+          "halo_warmth": 0.0,
+          "core_intensity": 1.0,
+          "core_size": 1.0,
+          "halo_intensity": 1.0,
+          "halo_size": 1.0,
+          "bloom_intensity": 1.0,
+          "bloom_size": 1.0
+        }
+      },
+      "enlarger": {
+        "illuminant": "TH-KG3",
+        "print_exposure": 1.0,
+        "print_exposure_compensation": true,
+        "normalize_print_exposure": true,
+        "y_filter_shift": 0.0,
+        "m_filter_shift": 0.0,
+        "y_filter_neutral": 58.5840694289496,
+        "m_filter_neutral": 57.71493266136707,
+        "c_filter_neutral": 0.0,
+        "lens_blur": 0.0,
+        "diffusion_filter": {
+          "active": false,
+          "filter_family": "black_pro_mist",
+          "strength": 0.5,
+          "spatial_scale": 1.0,
+          "halo_warmth": 0.0,
+          "core_intensity": 1.0,
+          "core_size": 1.0,
+          "halo_intensity": 1.0,
+          "halo_size": 1.0,
+          "bloom_intensity": 1.0,
+          "bloom_size": 1.0
+        },
+        "preflash_exposure": 0.0,
+        "preflash_y_filter_shift": 0.0,
+        "preflash_m_filter_shift": 0.0
+      },
+      "scanner": {
+        "lens_blur": 0.0,
+        "white_correction": false,
+        "black_correction": false,
+        "white_level": 0.98,
+        "black_level": 0.01,
+        "unsharp_mask": [
+          0.0,
+          0.0
+        ]
+      },
+      "io": {
+        "input_color_space": "ProPhoto RGB",
+        "input_cctf_decoding": false,
+        "output_color_space": "sRGB",
+        "output_cctf_encoding": true,
+        "input_gamut_compress": {
+          "active": true,
+          "algorithm": "xy",
+          "knee": [
+            0.0,
+            1.0,
+            6.0
+          ]
+        },
+        "output_gamut_compress": {
+          "algorithm": "cam16ucs",
+          "knee": [
+            0.0,
+            1.0,
+            6.0
+          ],
+          "lightness_compression": [
+            0.7,
+            1.0,
+            2.2
+          ]
+        },
+        "crop": false,
+        "crop_center": [
+          0.5,
+          0.5
+        ],
+        "crop_size": [
+          0.1,
+          0.1
+        ],
+        "upscale_factor": 1.0,
+        "scan_film": false
+      },
+      "debug": {
+        "deactivate_spatial_effects": false,
+        "deactivate_stochastic_effects": true,
+        "print_timings": false,
+        "lut_mode": false
+      },
+      "settings": {
+        "rgb_to_raw_method": "hanatos2025",
+        "apply_hanatos2025_adaptation_window": true,
+        "apply_hanatos2025_adaptation_surface": false,
+        "spectral_gaussian_blur": 0.0,
+        "use_enlarger_lut": true,
+        "use_scanner_lut": true,
+        "lut_resolution": 17,
+        "use_fast_stats": true,
+        "preview_max_size": 640,
+        "preview_mode": true,
+        "neutral_print_filters_from_database": true
+      },
+      "taps": {
+        "inject": null,
+        "collect": null
+      }
+    }
+  },
+  "samples": [
+    {
+      "phase": "cold_process",
+      "variant": 0,
+      "prepare_seconds": 2.7595101999977487,
+      "engine_seconds": 6.644057100002101,
+      "node_seconds": {
+        "preprocess": 0.012101799999072682,
+        "SpectralLUTService.get_filming_tc_lut": 1.7700000171316788e-05,
+        "filming.expose": 2.374398600000859,
+        "filming.develop": 0.011590400001296075,
+        "SpectralLUTService.spectral_compute_enlarger": 2.3964086000014504,
+        "printing.expose": 2.415406599997368,
+        "printing.develop": 0.002705399998376379,
+        "SpectralLUTService.spectral_compute_scanner": 0.0329505000008794,
+        "scanning.scan_print": 1.8270775999990292
+      },
+      "nested_seconds": {
+        "filming.halation": 2.3242393000000448,
+        "develop.density_interpolation": 0.002800899997964734,
+        "develop.couplers": 0.008560599999327678,
+        "develop.grain": 2.7999994927085936e-06,
+        "cam16ucs.inverse": 0.3218424000078812,
+        "cam16ucs.forward": 0.0004621999978553504,
+        "gamut.cam16ucs": 1.7186346000016783
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 472850432,
+        "commit_bytes": 447561728
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008642699998745229,
+      "engine_seconds": 0.298487699998077,
+      "node_seconds": {
+        "preprocess": 0.01248920000216458,
+        "SpectralLUTService.get_filming_tc_lut": 1.3299999409355223e-05,
+        "filming.expose": 0.09455250000246451,
+        "filming.develop": 0.01079799999934039,
+        "SpectralLUTService.spectral_compute_enlarger": 0.026339000000007218,
+        "printing.expose": 0.05241290000049048,
+        "printing.develop": 0.0029321000001800712,
+        "SpectralLUTService.spectral_compute_scanner": 0.03200729999662144,
+        "scanning.scan_print": 0.12433190000228933
+      },
+      "nested_seconds": {
+        "filming.halation": 0.046285300002637086,
+        "develop.density_interpolation": 0.002297099999850616,
+        "develop.couplers": 0.008207899998524226,
+        "develop.grain": 3.6999990697950125e-06,
+        "cam16ucs.forward": 0.0005984000017633662,
+        "gamut.cam16ucs": 0.021311699998477707
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 482648064,
+        "commit_bytes": 456695808
+      }
+    }
+  ],
+  "summary": {
+    "warm_samples": 1,
+    "median_seconds": 0.298487699998077,
+    "mad_seconds": 0.0,
+    "min_seconds": 0.298487699998077,
+    "max_seconds": 0.298487699998077
+  },
+  "engine_process_peaks": {
+    "working_set_bytes": 482648064,
+    "commit_bytes": 456695808
+  },
+  "separate_io": {},
+  "output_shape": [
+    640,
+    400,
+    3
+  ],
+  "output_dtype": "float64",
+  "last_output_reference": {
+    "file": "cpu-chart.npy",
+    "sha256": "45caa1a69a33f961eeec910e856333e7316262a2ae56350f2378892f07714b77",
+    "variant": 0
+  }
+}

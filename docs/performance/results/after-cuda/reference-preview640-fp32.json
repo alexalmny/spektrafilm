@@ -1,0 +1,934 @@
+{
+  "commit": "8b7a09c7a5d96253168c8ccf20130f2711029d43",
+  "tracked_worktree_dirty": false,
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.13.14",
+  "packages": {
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "colour-science": "0.4.7",
+    "numba": "0.68.1",
+    "rawpy": "0.26.1",
+    "OpenImageIO": "3.1.19.0",
+    "psutil": "7.2.2",
+    "threadpoolctl": "3.8.0",
+    "spektrafilm": "0.3.4"
+  },
+  "cpu": "AMD Ryzen 7 5800X 8-Core Processor",
+  "cpu_physical": 8,
+  "cpu_logical": 16,
+  "ram_bytes": 34282233856,
+  "gpu": "NVIDIA GeForce RTX 3070, 610.62, 8192 MiB",
+  "threads_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "8"
+  },
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "libscipy_openblas64_-4e39871015dc1470c682dc512497ee22.dll",
+      "version": "0.3.34.237.2",
+      "threading_layer": "pthreads",
+      "architecture": "Haswell"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+      "version": "0.3.31.dev",
+      "threading_layer": "pthreads",
+      "architecture": "Haswell"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 8,
+      "prefix": "vcomp",
+      "filepath": "vcomp140.dll",
+      "version": null
+    }
+  ],
+  "numba_threads": 8,
+  "numba_threading_layer": "omp",
+  "numba_cache": {
+    "location": "explicit",
+    "files_before": 0
+  },
+  "options": {
+    "case": "preview640",
+    "mode": "print",
+    "change": "repeat",
+    "warm": 10,
+    "blas_threads": 1,
+    "numba_threads": 8,
+    "cam16_backend": "cuda-fp32",
+    "cuda_band_pixels": null,
+    "update": false,
+    "deterministic": true,
+    "grain_off": false,
+    "halation_off": false,
+    "display": false,
+    "export": false,
+    "reference": true
+  },
+  "input": {
+    "kind": "TIFF",
+    "sha256": "3e81ccb00aba91dd236578743a5f4c432f823bd26d532fea1be6f3933312f17d",
+    "source_shape": [
+      1000,
+      667,
+      3
+    ],
+    "engine_shape": [
+      640,
+      426,
+      3
+    ],
+    "engine_dtype": "float32",
+    "load_seconds": 0.0247295999997732,
+    "resize_seconds": 0.03687279999940074
+  },
+  "configurations": {
+    "0": {
+      "film": "kodak_gold_200",
+      "print": "kodak_supra_endura",
+      "film_render": {
+        "density_curve_gamma": 1.0,
+        "grain": {
+          "active": false,
+          "sublayers_active": true,
+          "particle_area_um2": 0.0,
+          "particle_scale": [
+            1.6,
+            1.6,
+            3.2
+          ],
+          "particle_scale_layers": [
+            2.0,
+            1.0,
+            0.5
+          ],
+          "density_min": [
+            0.03,
+            0.03,
+            0.03
+          ],
+          "uniformity": [
+            0.97,
+            0.99,
+            0.97
+          ],
+          "blur": 0.0,
+          "blur_dye_clouds_um": 1.0,
+          "micro_structure": [
+            0.2,
+            30
+          ],
+          "n_sub_layers": 1
+        },
+        "halation": {
+          "active": true,
+          "scatter_amount": 1.0,
+          "scatter_spatial_scale": 1.0,
+          "halation_amount": 1.0,
+          "halation_spatial_scale": 1.0,
+          "scatter_core_um": [
+            2.2,
+            2.0,
+            1.6
+          ],
+          "scatter_tail_um": [
+            9.3,
+            9.7,
+            9.1
+          ],
+          "scatter_tail_weight": [
+            0.78,
+            0.65,
+            0.67
+          ],
+          "boost_ev": 0.0,
+          "boost_range": 0.3,
+          "protect_ev": 4.0,
+          "halation_strength": [
+            0.08,
+            0.02,
+            0.0
+          ],
+          "halation_first_sigma_um": [
+            65.0,
+            65.0,
+            65.0
+          ],
+          "halation_n_bounces": 3,
+          "halation_bounce_decay": 0.5,
+          "halation_renormalize": true
+        },
+        "dir_couplers": {
+          "active": true,
+          "amount": 1.0,
+          "inhibition_samelayer": 1.0,
+          "inhibition_interlayer": 1.0,
+          "gamma_samelayer_rgb": [
+            0.336,
+            0.319,
+            0.273
+          ],
+          "gamma_interlayer_r_to_gb": [
+            0.353,
+            0.302
+          ],
+          "gamma_interlayer_g_to_rb": [
+            0.154,
+            0.353
+          ],
+          "gamma_interlayer_b_to_rg": [
+            0.168,
+            0.226
+          ],
+          "diffusion_size_um": 0.0,
+          "diffusion_tail_um": 200.0,
+          "diffusion_tail_weight": 0.06
+        },
+        "glare": {
+          "active": true,
+          "percent": 0.03,
+          "roughness": 0.7,
+          "blur": 0.5
+        }
+      },
+      "print_render": {
+        "glare": {
+          "active": false,
+          "percent": 0.03,
+          "roughness": 0.7,
+          "blur": 0.0
+        },
+        "density_curves_morph": {
+          "active": false,
+          "gamma_factor": 1.0,
+          "gamma_factor_fast": 1.0,
+          "gamma_factor_slow": 1.0,
+          "gamma_factor_red": 1.0,
+          "gamma_factor_green": 1.0,
+          "gamma_factor_blue": 1.0,
+          "developer_exhaustion": 0.0
+        }
+      },
+      "camera": {
+        "exposure_compensation_ev": 0.0,
+        "auto_exposure": true,
+        "auto_exposure_method": "center_weighted",
+        "lens_blur_um": 0.0,
+        "film_format_mm": 35.0,
+        "filter_uv": [
+          0.0,
+          410.0,
+          8.0
+        ],
+        "filter_ir": [
+          0.0,
+          675.0,
+          15.0
+        ],
+        "diffusion_filter": {
+          "active": false,
+          "filter_family": "black_pro_mist",
+          "strength": 0.5,
+          "spatial_scale": 1.0,
+          "halo_warmth": 0.0,
+          "core_intensity": 1.0,
+          "core_size": 1.0,
+          "halo_intensity": 1.0,
+          "halo_size": 1.0,
+          "bloom_intensity": 1.0,
+          "bloom_size": 1.0
+        }
+      },
+      "enlarger": {
+        "illuminant": "TH-KG3",
+        "print_exposure": 1.0,
+        "print_exposure_compensation": true,
+        "normalize_print_exposure": true,
+        "y_filter_shift": 0.0,
+        "m_filter_shift": 0.0,
+        "y_filter_neutral": 58.5840694289496,
+        "m_filter_neutral": 57.71493266136707,
+        "c_filter_neutral": 0.0,
+        "lens_blur": 0.0,
+        "diffusion_filter": {
+          "active": false,
+          "filter_family": "black_pro_mist",
+          "strength": 0.5,
+          "spatial_scale": 1.0,
+          "halo_warmth": 0.0,
+          "core_intensity": 1.0,
+          "core_size": 1.0,
+          "halo_intensity": 1.0,
+          "halo_size": 1.0,
+          "bloom_intensity": 1.0,
+          "bloom_size": 1.0
+        },
+        "preflash_exposure": 0.0,
+        "preflash_y_filter_shift": 0.0,
+        "preflash_m_filter_shift": 0.0
+      },
+      "scanner": {
+        "lens_blur": 0.0,
+        "white_correction": false,
+        "black_correction": false,
+        "white_level": 0.98,
+        "black_level": 0.01,
+        "unsharp_mask": [
+          0.0,
+          0.0
+        ]
+      },
+      "io": {
+        "input_color_space": "ProPhoto RGB",
+        "input_cctf_decoding": false,
+        "output_color_space": "sRGB",
+        "output_cctf_encoding": true,
+        "input_gamut_compress": {
+          "active": true,
+          "algorithm": "xy",
+          "knee": [
+            0.0,
+            1.0,
+            6.0
+          ]
+        },
+        "output_gamut_compress": {
+          "algorithm": "cam16ucs",
+          "knee": [
+            0.0,
+            1.0,
+            6.0
+          ],
+          "lightness_compression": [
+            0.7,
+            1.0,
+            2.2
+          ]
+        },
+        "crop": false,
+        "crop_center": [
+          0.5,
+          0.5
+        ],
+        "crop_size": [
+          0.1,
+          0.1
+        ],
+        "upscale_factor": 1.0,
+        "scan_film": false
+      },
+      "debug": {
+        "deactivate_spatial_effects": false,
+        "deactivate_stochastic_effects": true,
+        "print_timings": false,
+        "lut_mode": false
+      },
+      "settings": {
+        "rgb_to_raw_method": "hanatos2025",
+        "apply_hanatos2025_adaptation_window": true,
+        "apply_hanatos2025_adaptation_surface": false,
+        "spectral_gaussian_blur": 0.0,
+        "use_enlarger_lut": true,
+        "use_scanner_lut": true,
+        "lut_resolution": 17,
+        "use_fast_stats": true,
+        "preview_max_size": 640,
+        "preview_mode": true,
+        "neutral_print_filters_from_database": true
+      },
+      "taps": {
+        "inject": null,
+        "collect": null
+      }
+    }
+  },
+  "samples": [
+    {
+      "phase": "cold_process",
+      "variant": 0,
+      "prepare_seconds": 2.7366910999999163,
+      "engine_seconds": 5.911470499999268,
+      "node_seconds": {
+        "preprocess": 0.012650200000280165,
+        "SpectralLUTService.get_filming_tc_lut": 1.7299999854003545e-05,
+        "filming.expose": 2.3662476999998034,
+        "filming.develop": 0.013323799999852781,
+        "SpectralLUTService.spectral_compute_enlarger": 2.3958707000001596,
+        "printing.expose": 2.4155848000000333,
+        "printing.develop": 0.003128100000139966,
+        "SpectralLUTService.spectral_compute_scanner": 0.031462800000554125,
+        "scanning.scan_print": 1.0996869999999035
+      },
+      "nested_seconds": {
+        "filming.halation": 2.303270400000656,
+        "develop.density_interpolation": 0.002630400000271038,
+        "develop.couplers": 0.010373899999649439,
+        "develop.grain": 3.5000002753804438e-06,
+        "cam16ucs.inverse": 0.3148183999992398,
+        "cam16ucs.forward": 0.0004580000004352769,
+        "gamut.cam16ucs": 0.9973178000000189
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 772337664,
+        "commit_bytes": 976257024
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 0.2903320999994321,
+        "kernel_compile_or_load_seconds": 0.2763857999998436,
+        "constants_upload_seconds": 0.000598599999648286,
+        "host_pack_seconds": 0.0012496999997893,
+        "upload_seconds": 0.0004959360063076019,
+        "kernel_seconds": 9.843199700117111e-05,
+        "download_seconds": 0.0005766720175743102,
+        "host_seconds": 0.5728829999998197,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1130889216,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008541199999854143,
+      "engine_seconds": 0.2682819000001473,
+      "node_seconds": {
+        "preprocess": 0.012301900000238675,
+        "SpectralLUTService.get_filming_tc_lut": 1.3699999726668466e-05,
+        "filming.expose": 0.09580509999977949,
+        "filming.develop": 0.011699100000441831,
+        "SpectralLUTService.spectral_compute_enlarger": 0.024177100000088103,
+        "printing.expose": 0.04384829999980866,
+        "printing.develop": 0.00312839999969583,
+        "SpectralLUTService.spectral_compute_scanner": 0.023988200000530924,
+        "scanning.scan_print": 0.10079810000024736
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04335020000053191,
+        "develop.density_interpolation": 0.0027358999996067723,
+        "develop.couplers": 0.008748299999751907,
+        "develop.grain": 2.600000698294025e-06,
+        "cam16ucs.forward": 0.00044969999999011634,
+        "gamut.cam16ucs": 0.00615269999980228
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779227136,
+        "commit_bytes": 983875584
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.7799999518028926e-05,
+        "kernel_compile_or_load_seconds": 1.0000003385357559e-06,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0010975000004691537,
+        "upload_seconds": 0.00033923199772834775,
+        "kernel_seconds": 9.884800016880036e-05,
+        "download_seconds": 0.0004872640073299408,
+        "host_seconds": 0.004877899999883084,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008004299999811337,
+      "engine_seconds": 0.301524900000004,
+      "node_seconds": {
+        "preprocess": 0.012196500000754895,
+        "SpectralLUTService.get_filming_tc_lut": 1.4000000192027073e-05,
+        "filming.expose": 0.09612509999988106,
+        "filming.develop": 0.012212099999487691,
+        "SpectralLUTService.spectral_compute_enlarger": 0.027869499999724212,
+        "printing.expose": 0.04777860000012879,
+        "printing.develop": 0.0030738000004930655,
+        "SpectralLUTService.spectral_compute_scanner": 0.028644899999562767,
+        "scanning.scan_print": 0.1293785999996544
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04316660000040429,
+        "develop.density_interpolation": 0.002693899999940186,
+        "develop.couplers": 0.009218499999406049,
+        "develop.grain": 2.8000004022032954e-06,
+        "cam16ucs.forward": 0.0008686999999554246,
+        "gamut.cam16ucs": 0.013100999999551277
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779472896,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 6.8700000156241e-05,
+        "kernel_compile_or_load_seconds": 2.099999619531445e-06,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.003234599999814236,
+        "upload_seconds": 0.0005766720175743102,
+        "kernel_seconds": 0.00011113599687814713,
+        "download_seconds": 0.0010543999671936036,
+        "host_seconds": 0.01033480000023701,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008090899999842804,
+      "engine_seconds": 0.2997362999994948,
+      "node_seconds": {
+        "preprocess": 0.017947100000128557,
+        "SpectralLUTService.get_filming_tc_lut": 1.4600000213249587e-05,
+        "filming.expose": 0.10055689999990136,
+        "filming.develop": 0.011910400000488153,
+        "SpectralLUTService.spectral_compute_enlarger": 0.0335332999993625,
+        "printing.expose": 0.0609494000000268,
+        "printing.develop": 0.002577000000201224,
+        "SpectralLUTService.spectral_compute_scanner": 0.02715870000065479,
+        "scanning.scan_print": 0.10502200000064477
+      },
+      "nested_seconds": {
+        "filming.halation": 0.045550099999672966,
+        "develop.density_interpolation": 0.0027358000006643124,
+        "develop.couplers": 0.008887499999218562,
+        "develop.grain": 2.599999788799323e-06,
+        "cam16ucs.forward": 0.0004011999999420368,
+        "gamut.cam16ucs": 0.00611399999979767
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779485184,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.4300000152143184e-05,
+        "kernel_compile_or_load_seconds": 9.000004865811206e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011239999994359096,
+        "upload_seconds": 0.0003368319869041443,
+        "kernel_seconds": 0.00010009600222110748,
+        "download_seconds": 0.000481440007686615,
+        "host_seconds": 0.004869500000495464,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008015100000193343,
+      "engine_seconds": 0.29650910000054864,
+      "node_seconds": {
+        "preprocess": 0.012706800000160001,
+        "SpectralLUTService.get_filming_tc_lut": 1.7299999854003545e-05,
+        "filming.expose": 0.10254239999994752,
+        "filming.develop": 0.01277829999980895,
+        "SpectralLUTService.spectral_compute_enlarger": 0.026764299999740615,
+        "printing.expose": 0.048875999999836495,
+        "printing.develop": 0.003050299999813433,
+        "SpectralLUTService.spectral_compute_scanner": 0.02999589999944874,
+        "scanning.scan_print": 0.1156927000001815
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04507560000001831,
+        "develop.density_interpolation": 0.002611899999465095,
+        "develop.couplers": 0.009882199999992736,
+        "develop.grain": 3.3999995139311068e-06,
+        "cam16ucs.forward": 0.0004073999998581712,
+        "gamut.cam16ucs": 0.006147699999928591
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779501568,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.5399999433138873e-05,
+        "kernel_compile_or_load_seconds": 8.999995770864189e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011604000001170789,
+        "upload_seconds": 0.0003354560136795044,
+        "kernel_seconds": 0.0001006079986691475,
+        "download_seconds": 0.000490880012512207,
+        "host_seconds": 0.004924400000163587,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.00889770000048884,
+      "engine_seconds": 0.28693529999964085,
+      "node_seconds": {
+        "preprocess": 0.012756399999489076,
+        "SpectralLUTService.get_filming_tc_lut": 1.3299999409355223e-05,
+        "filming.expose": 0.10203540000020439,
+        "filming.develop": 0.011830399999780639,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02439680000043154,
+        "printing.expose": 0.04514210000070307,
+        "printing.develop": 0.0033542000001034467,
+        "SpectralLUTService.spectral_compute_scanner": 0.029218499999842606,
+        "scanning.scan_print": 0.11096660000021075
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04640419999941514,
+        "develop.density_interpolation": 0.002727000000049884,
+        "develop.couplers": 0.008893100000022969,
+        "develop.grain": 2.4000000848900527e-06,
+        "cam16ucs.forward": 0.00039959999958227854,
+        "gamut.cam16ucs": 0.006076900000152818
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779505664,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.479999941191636e-05,
+        "kernel_compile_or_load_seconds": 9.000004865811206e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.00114080000003014,
+        "upload_seconds": 0.00033667200803756713,
+        "kernel_seconds": 9.87199991941452e-05,
+        "download_seconds": 0.00048371198773384096,
+        "host_seconds": 0.004873399999269168,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.007955500000207394,
+      "engine_seconds": 0.3112423000002309,
+      "node_seconds": {
+        "preprocess": 0.012603600000147708,
+        "SpectralLUTService.get_filming_tc_lut": 1.2999999853491317e-05,
+        "filming.expose": 0.12571750000006432,
+        "filming.develop": 0.011903800000254705,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02700410000034026,
+        "printing.expose": 0.04874070000005304,
+        "printing.develop": 0.0030181000001903158,
+        "SpectralLUTService.spectral_compute_scanner": 0.029536000000007334,
+        "scanning.scan_print": 0.10856429999967077
+      },
+      "nested_seconds": {
+        "filming.halation": 0.05918459999975312,
+        "develop.density_interpolation": 0.0027283999997962383,
+        "develop.couplers": 0.00896279999960825,
+        "develop.grain": 3.5000002753804438e-06,
+        "cam16ucs.forward": 0.0004054000000905944,
+        "gamut.cam16ucs": 0.006121599999460159
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779505664,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.4300000152143184e-05,
+        "kernel_compile_or_load_seconds": 8.000006346264854e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011268999996900675,
+        "upload_seconds": 0.0003324800133705139,
+        "kernel_seconds": 9.855999797582626e-05,
+        "download_seconds": 0.0005104320049285889,
+        "host_seconds": 0.0048932000008790055,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008034100000259059,
+      "engine_seconds": 0.26922930000000633,
+      "node_seconds": {
+        "preprocess": 0.012263999999959196,
+        "SpectralLUTService.get_filming_tc_lut": 1.4199999895936344e-05,
+        "filming.expose": 0.09639110000080109,
+        "filming.develop": 0.011938499999814667,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02433420000033948,
+        "printing.expose": 0.0439581000000544,
+        "printing.develop": 0.003062800000407151,
+        "SpectralLUTService.spectral_compute_scanner": 0.024134399999638845,
+        "scanning.scan_print": 0.10091680000004999
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04393419999996695,
+        "develop.density_interpolation": 0.0027737999998862506,
+        "develop.couplers": 0.008946400000240828,
+        "develop.grain": 2.2999993234407157e-06,
+        "cam16ucs.forward": 0.0004125000004933099,
+        "gamut.cam16ucs": 0.006082000000787957
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779509760,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.459999970800709e-05,
+        "kernel_compile_or_load_seconds": 7.999997251317836e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011261999998168903,
+        "upload_seconds": 0.00033529600501060484,
+        "kernel_seconds": 9.942399710416794e-05,
+        "download_seconds": 0.00047443199157714845,
+        "host_seconds": 0.004860499999267631,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008025699999961944,
+      "engine_seconds": 0.2741932999997516,
+      "node_seconds": {
+        "preprocess": 0.01239480000003823,
+        "SpectralLUTService.get_filming_tc_lut": 1.340000017080456e-05,
+        "filming.expose": 0.0965955000001486,
+        "filming.develop": 0.011741699999220145,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02424429999973654,
+        "printing.expose": 0.047895700000481156,
+        "printing.develop": 0.0031894000003376277,
+        "SpectralLUTService.spectral_compute_scanner": 0.02410509999936039,
+        "scanning.scan_print": 0.10153379999974277
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04369529999985389,
+        "develop.density_interpolation": 0.002719000000070082,
+        "develop.couplers": 0.008817400000225462,
+        "develop.grain": 2.3000002329354174e-06,
+        "cam16ucs.forward": 0.0004102000002603745,
+        "gamut.cam16ucs": 0.006158800000775955
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779513856,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.459999970800709e-05,
+        "kernel_compile_or_load_seconds": 1.0000003385357559e-06,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011469000000943197,
+        "upload_seconds": 0.0003330560028553009,
+        "kernel_seconds": 9.964799880981445e-05,
+        "download_seconds": 0.0004912959933280945,
+        "host_seconds": 0.00493449999976292,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.008156400000189024,
+      "engine_seconds": 0.30240299999968556,
+      "node_seconds": {
+        "preprocess": 0.012864299999819195,
+        "SpectralLUTService.get_filming_tc_lut": 1.3100000614940654e-05,
+        "filming.expose": 0.09985459999916202,
+        "filming.develop": 0.011670599999888509,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02453590000004624,
+        "printing.expose": 0.05668249999962427,
+        "printing.develop": 0.0037413999998534564,
+        "SpectralLUTService.spectral_compute_scanner": 0.03522549999979674,
+        "scanning.scan_print": 0.11649409999972704
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04617030000008526,
+        "develop.density_interpolation": 0.002643099999659171,
+        "develop.couplers": 0.008820600000035483,
+        "develop.grain": 2.499999936844688e-06,
+        "cam16ucs.forward": 0.00041060000057768775,
+        "gamut.cam16ucs": 0.00607419999960257
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779517952,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.4100000448233914e-05,
+        "kernel_compile_or_load_seconds": 8.999995770864189e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011135999993712176,
+        "upload_seconds": 0.0003349759876728058,
+        "kernel_seconds": 0.00010086400061845779,
+        "download_seconds": 0.0004679040014743805,
+        "host_seconds": 0.004859300000134681,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    },
+    {
+      "phase": "warm",
+      "variant": 0,
+      "prepare_seconds": 0.011200199999620963,
+      "engine_seconds": 0.2735159999992902,
+      "node_seconds": {
+        "preprocess": 0.01304800000070827,
+        "SpectralLUTService.get_filming_tc_lut": 1.3399999261309858e-05,
+        "filming.expose": 0.10008579999976064,
+        "filming.develop": 0.011825499999758904,
+        "SpectralLUTService.spectral_compute_enlarger": 0.02420960000017658,
+        "printing.expose": 0.04401510000025155,
+        "printing.develop": 0.003074899999774061,
+        "SpectralLUTService.spectral_compute_scanner": 0.023970500000359607,
+        "scanning.scan_print": 0.10076719999960915
+      },
+      "nested_seconds": {
+        "filming.halation": 0.04664930000035383,
+        "develop.density_interpolation": 0.002666700000190758,
+        "develop.couplers": 0.008947899999839137,
+        "develop.grain": 2.6999996407539584e-06,
+        "cam16ucs.forward": 0.00040529999932914507,
+        "gamut.cam16ucs": 0.006055300000298303
+      },
+      "process_peaks_to_date": {
+        "working_set_bytes": 779587584,
+        "commit_bytes": 983908352
+      },
+      "cuda_cam16ucs": {
+        "precision": "fp32",
+        "bands": 1,
+        "max_band_pixels": 272640,
+        "initialize_seconds": 3.4499999856052455e-05,
+        "kernel_compile_or_load_seconds": 9.000004865811206e-07,
+        "constants_upload_seconds": 0.0,
+        "host_pack_seconds": 0.0011171000005560927,
+        "upload_seconds": 0.00033350399136543275,
+        "kernel_seconds": 9.967999905347824e-05,
+        "download_seconds": 0.0004877760112285614,
+        "host_seconds": 0.004844299999604118,
+        "peak_device_used_bytes": 1143472128,
+        "peak_cupy_pool_bytes": 6728192,
+        "used_before_bytes": 1143472128,
+        "total_device_bytes": 8589410304,
+        "cupy_version": "14.2.0",
+        "cuda_driver_version": 13030,
+        "cuda_runtime_version": 12090,
+        "invalid_pixels": 0
+      }
+    }
+  ],
+  "summary": {
+    "warm_samples": 10,
+    "median_seconds": 0.29172220000009474,
+    "mad_seconds": 0.014104849999966973,
+    "min_seconds": 0.2682819000001473,
+    "max_seconds": 0.3112423000002309
+  },
+  "engine_process_peaks": {
+    "working_set_bytes": 779587584,
+    "commit_bytes": 983908352
+  },
+  "separate_io": {},
+  "output_shape": [
+    640,
+    426,
+    3
+  ],
+  "output_dtype": "float64",
+  "last_output_reference": {
+    "file": "reference-preview640-fp32.npy",
+    "sha256": "0a56e1a89236905ea3a1ab36c848f7cd587d81e2480df30c7f26b1c64eead0b8",
+    "variant": 0
+  }
+}

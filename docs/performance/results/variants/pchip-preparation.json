@@ -1,0 +1,274 @@
+{
+  "commit": "67f4204c5c1716fa2d7f755ea3c8bf4b8feff7c1",
+  "case": {
+    "case": "preview640",
+    "mode": "print",
+    "change": "repeat",
+    "deterministic": false,
+    "grain_off": false,
+    "halation_off": false
+  },
+  "numba_threads": 8,
+  "blas_threads": 1,
+  "input_shape": [
+    640,
+    426,
+    3
+  ],
+  "samples": [
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.0188598999993701
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027430000045569614
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013015700002142694
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002725000013015233
+        }
+      ],
+      "engine_seconds": 0.3104767000004358
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013150599999789847
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027689999842550606
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.020549899996694876
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00045080000199959613
+        }
+      ],
+      "engine_seconds": 0.32219350000013947
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013081600001896732
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002684999999473803
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.01638939999975264
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00026869999783230014
+        }
+      ],
+      "engine_seconds": 0.31055389999892213
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013226900002337061
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00026529999740887433
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.01301219999731984
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002691000008780975
+        }
+      ],
+      "engine_seconds": 0.34216639999795007
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013152700001228368
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027489999774843454
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.016487900000356603
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0004563999973470345
+        }
+      ],
+      "engine_seconds": 0.31503589999920223
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013363599999138387
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002752999971562531
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.012806999999156687
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.000270799999270821
+        }
+      ],
+      "engine_seconds": 0.31326410000110627
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013246900001831818
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00026359999901615083
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013122899999871152
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027159999808645807
+        }
+      ],
+      "engine_seconds": 0.3331313000016962
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.01578670000162674
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002801999980874825
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.015749900001537753
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002673999988473952
+        }
+      ],
+      "engine_seconds": 0.33027059999949415
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013179300000047078
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027459999910206534
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013258400002087
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027269999918644316
+        }
+      ],
+      "engine_seconds": 0.30623089999789954
+    },
+    {
+      "calls": [
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.013192300000810064
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.00027319999935571104
+        },
+        {
+          "size": 17,
+          "part": "monotonicity",
+          "seconds": 0.012887900000350783
+        },
+        {
+          "size": 17,
+          "part": "slopes_and_limits",
+          "seconds": 0.0002666000000317581
+        }
+      ],
+      "engine_seconds": 0.33282580000013695
+    }
+  ],
+  "median_seconds": {
+    "monotonicity": 0.027954350001891726,
+    "slopes_and_limits": 0.0005464499990921468
+  }
+}

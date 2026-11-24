@@ -1,0 +1,720 @@
+{
+  "commit": "8b7a09c7a5d96253168c8ccf20130f2711029d43",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.13.14",
+  "qt_platform": "default",
+  "threads_env": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "8"
+  },
+  "numba_cache": "explicit",
+  "settings": {
+    "input_image": {
+      "input_color_space": "ProPhoto RGB",
+      "input_cctf_decoding": false,
+      "upscale_factor": 1.0,
+      "crop": false,
+      "crop_center": [
+        0.5,
+        0.5
+      ],
+      "crop_size": [
+        0.1,
+        0.1
+      ],
+      "rgb_to_raw_method": "hanatos2025",
+      "apply_hanatos2025_adaptation_window": true,
+      "apply_hanatos2025_adaptation_surface": false,
+      "spectral_gaussian_blur": 0.0
+    },
+    "grain": {
+      "active": true,
+      "sublayers_active": true,
+      "particle_area_um2": 0.2,
+      "particle_scale": [
+        1.6,
+        1.6,
+        3.2
+      ],
+      "particle_scale_layers": [
+        2.0,
+        1.0,
+        0.5
+      ],
+      "density_min": [
+        0.03,
+        0.03,
+        0.03
+      ],
+      "uniformity": [
+        0.97,
+        0.99,
+        0.97
+      ],
+      "blur": 0.65,
+      "blur_dye_clouds_um": 1.0,
+      "micro_structure": [
+        0.2,
+        30
+      ],
+      "n_sub_layers": 1
+    },
+    "preflashing": {
+      "illuminant": "TH-KG3",
+      "print_exposure": 1.0,
+      "print_exposure_compensation": true,
+      "normalize_print_exposure": true,
+      "y_filter_shift": 0.0,
+      "m_filter_shift": 0.0,
+      "y_filter_neutral": 58.5840694289496,
+      "m_filter_neutral": 57.71493266136707,
+      "c_filter_neutral": 0.0,
+      "lens_blur": 0.0,
+      "diffusion_filter": {
+        "active": false,
+        "filter_family": "black_pro_mist",
+        "strength": 0.5,
+        "spatial_scale": 1.0,
+        "halo_warmth": 0.0,
+        "core_intensity": 1.0,
+        "core_size": 1.0,
+        "halo_intensity": 1.0,
+        "halo_size": 1.0,
+        "bloom_intensity": 1.0,
+        "bloom_size": 1.0
+      },
+      "preflash_exposure": 0.0,
+      "preflash_y_filter_shift": 0.0,
+      "preflash_m_filter_shift": 0.0
+    },
+    "halation": {
+      "active": true,
+      "scatter_amount": 1.0,
+      "scatter_spatial_scale": 1.0,
+      "halation_amount": 1.0,
+      "halation_spatial_scale": 1.0,
+      "scatter_core_um": [
+        2.2,
+        2.0,
+        1.6
+      ],
+      "scatter_tail_um": [
+        9.3,
+        9.7,
+        9.1
+      ],
+      "scatter_tail_weight": [
+        0.78,
+        0.65,
+        0.67
+      ],
+      "boost_ev": 0.0,
+      "boost_range": 0.3,
+      "protect_ev": 4.0,
+      "halation_strength": [
+        0.08,
+        0.02,
+        0.0
+      ],
+      "halation_first_sigma_um": [
+        65.0,
+        65.0,
+        65.0
+      ],
+      "halation_n_bounces": 3,
+      "halation_bounce_decay": 0.5,
+      "halation_renormalize": true
+    },
+    "couplers": {
+      "active": true,
+      "amount": 1.0,
+      "inhibition_samelayer": 1.0,
+      "inhibition_interlayer": 1.0,
+      "gamma_samelayer_rgb": [
+        0.336,
+        0.319,
+        0.273
+      ],
+      "gamma_interlayer_r_to_gb": [
+        0.353,
+        0.302
+      ],
+      "gamma_interlayer_g_to_rb": [
+        0.154,
+        0.353
+      ],
+      "gamma_interlayer_b_to_rg": [
+        0.168,
+        0.226
+      ],
+      "diffusion_size_um": 20.0,
+      "diffusion_tail_um": 200.0,
+      "diffusion_tail_weight": 0.06
+    },
+    "chemistry": {
+      "active": false,
+      "gamma_factor": 1.0,
+      "gamma_factor_fast": 1.0,
+      "gamma_factor_slow": 1.0,
+      "gamma_factor_red": 1.0,
+      "gamma_factor_green": 1.0,
+      "gamma_factor_blue": 1.0,
+      "developer_exhaustion": 0.0
+    },
+    "camera": {
+      "exposure_compensation_ev": 0.0,
+      "auto_exposure": true,
+      "auto_exposure_method": "center_weighted",
+      "lens_blur_um": 0.0,
+      "film_format_mm": 35.0,
+      "filter_uv": [
+        0.0,
+        410.0,
+        8.0
+      ],
+      "filter_ir": [
+        0.0,
+        675.0,
+        15.0
+      ],
+      "diffusion_filter": {
+        "active": false,
+        "filter_family": "black_pro_mist",
+        "strength": 0.5,
+        "spatial_scale": 1.0,
+        "halo_warmth": 0.0,
+        "core_intensity": 1.0,
+        "core_size": 1.0,
+        "halo_intensity": 1.0,
+        "halo_size": 1.0,
+        "bloom_intensity": 1.0,
+        "bloom_size": 1.0
+      }
+    },
+    "enlarger_diffusion": {
+      "active": false,
+      "filter_family": "black_pro_mist",
+      "strength": 0.5,
+      "spatial_scale": 1.0,
+      "halo_warmth": 0.0,
+      "core_intensity": 1.0,
+      "core_size": 1.0,
+      "halo_intensity": 1.0,
+      "halo_size": 1.0,
+      "bloom_intensity": 1.0,
+      "bloom_size": 1.0
+    },
+    "camera_diffusion": {
+      "active": false,
+      "filter_family": "black_pro_mist",
+      "strength": 0.5,
+      "spatial_scale": 1.0,
+      "halo_warmth": 0.0,
+      "core_intensity": 1.0,
+      "core_size": 1.0,
+      "halo_intensity": 1.0,
+      "halo_size": 1.0,
+      "bloom_intensity": 1.0,
+      "bloom_size": 1.0
+    },
+    "glare": {
+      "active": true,
+      "percent": 0.03,
+      "roughness": 0.7,
+      "blur": 0.5
+    },
+    "scanner": {
+      "lens_blur": 0.0,
+      "white_correction": false,
+      "black_correction": false,
+      "white_level": 0.98,
+      "black_level": 0.01,
+      "unsharp_mask": [
+        0.7,
+        0.7
+      ]
+    },
+    "input_gamut_compress": {
+      "active": true,
+      "algorithm": "xy",
+      "knee": [
+        0.0,
+        1.0,
+        6.0
+      ]
+    },
+    "output_gamut_compress": {
+      "algorithm": "cam16ucs",
+      "knee": [
+        0.0,
+        1.0,
+        6.0
+      ],
+      "lightness_compression": [
+        0.7,
+        1.0,
+        2.2
+      ]
+    },
+    "special": {
+      "film_channel_swap": [
+        0,
+        1,
+        2
+      ],
+      "print_channel_swap": [
+        0,
+        1,
+        2
+      ],
+      "film_gamma_factor": 1.0
+    },
+    "simulation": {
+      "film_stock": "kodak_gold_200",
+      "print_paper": "kodak_supra_endura",
+      "print_illuminant": "TH-KG3",
+      "print_exposure_compensation": true,
+      "print_exposure": 1.0,
+      "print_y_filter_shift": 0.0,
+      "print_m_filter_shift": 0.0,
+      "output_color_space": "sRGB",
+      "saving_color_space": "sRGB",
+      "saving_cctf_encoding": true,
+      "auto_preview": true,
+      "scan_film": false
+    },
+    "load_raw": {
+      "white_balance": "as_shot",
+      "temperature": 5500.0,
+      "tint": 1.0,
+      "lens_correction": false
+    },
+    "display": {
+      "use_display_transform": true,
+      "gray_18_canvas": true,
+      "white_padding": 0.03,
+      "preview_max_size": 640,
+      "output_interpolation": "spline36"
+    }
+  },
+  "source": "linear ProPhoto TIFF",
+  "startup_to_show_request_seconds": 6.71267699999953,
+  "show_to_open_seconds": 0.1031634999999369,
+  "open_call_seconds": 0.20760820000032254,
+  "open_to_first_preview": {
+    "published_seconds": 12.720756700000493,
+    "first_draw_seconds": 12.739311899999848,
+    "settled_draw_seconds": 14.88718820000031
+  },
+  "edit_bursts": [
+    {
+      "published_seconds": 0.6672903999997288,
+      "first_draw_seconds": 0.6747887999999875,
+      "settled_draw_seconds": 1.12650769999982,
+      "exposure_ev": 1.5,
+      "edit_span_seconds": 0.11896260000048642,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5774780000001556,
+      "first_draw_seconds": 0.5825821999997061,
+      "settled_draw_seconds": 1.0310435000001235,
+      "exposure_ev": 0.0,
+      "edit_span_seconds": 0.11813530000017636,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5442917999998826,
+      "first_draw_seconds": 0.5495315999996819,
+      "settled_draw_seconds": 0.9828625000000102,
+      "exposure_ev": 1.5,
+      "edit_span_seconds": 0.13421500000004016,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.6113809999997102,
+      "first_draw_seconds": 0.6165971999998874,
+      "settled_draw_seconds": 1.0479867999993076,
+      "exposure_ev": 0.0,
+      "edit_span_seconds": 0.11747680000007676,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5694935000001351,
+      "first_draw_seconds": 0.5747996999998577,
+      "settled_draw_seconds": 1.0150186000000758,
+      "exposure_ev": 1.5,
+      "edit_span_seconds": 0.11721980000038457,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5933534000005238,
+      "first_draw_seconds": 0.5985541999998532,
+      "settled_draw_seconds": 0.999018000000433,
+      "exposure_ev": 0.25,
+      "edit_span_seconds": 0.11831040000015491,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5824180999998134,
+      "first_draw_seconds": 0.5876340000004348,
+      "settled_draw_seconds": 0.9839521000003515,
+      "exposure_ev": 1.5,
+      "edit_span_seconds": 0.13418999999976222,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5590856999997413,
+      "first_draw_seconds": 0.5642738999995345,
+      "settled_draw_seconds": 1.0143010000001595,
+      "exposure_ev": 0.0,
+      "edit_span_seconds": 0.1182094000005236,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.5862882000001264,
+      "first_draw_seconds": 0.5915740999998889,
+      "settled_draw_seconds": 0.9978892999997697,
+      "exposure_ev": 1.5,
+      "edit_span_seconds": 0.11737369999991643,
+      "workers_started": 1,
+      "outputs_published": 1
+    },
+    {
+      "published_seconds": 0.56465339999977,
+      "first_draw_seconds": 0.5698836999999912,
+      "settled_draw_seconds": 0.9831195000006119,
+      "exposure_ev": 0.0,
+      "edit_span_seconds": 0.13426309999977093,
+      "workers_started": 1,
+      "outputs_published": 1
+    }
+  ],
+  "edit_settled_median_seconds": 1.0066595000002962,
+  "edit_settled_mad_seconds": 0.023123699999814562,
+  "manual_scan": {
+    "published_seconds": 3.777365599999939,
+    "first_draw_seconds": 3.798129400000107,
+    "settled_draw_seconds": 3.798130299999684
+  },
+  "save_seconds": 0.050551300000734045,
+  "save_bytes": 3429978,
+  "worker_trace": [
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 7.196231399999306,
+      "worker_finished_at": 18.409343199999967
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 22.01029070000004,
+      "worker_finished_at": 22.48112399999991
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 23.243506399999205,
+      "worker_finished_at": 23.639155299999402
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 24.396631899999193,
+      "worker_finished_at": 24.77431230000002
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 25.515794399999322,
+      "worker_finished_at": 25.94433140000001
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 26.683704699999907,
+      "worker_finished_at": 27.0705939999998
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.25,
+      "worker_started_at": 27.820253599999887,
+      "worker_finished_at": 28.230691799999477
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 28.95578690000002,
+      "worker_finished_at": 29.35569249999935
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 30.06079580000005,
+      "worker_finished_at": 30.43728419999934
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 31.193413099999816,
+      "worker_finished_at": 31.5990026999998
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 32.330718199999865,
+      "worker_finished_at": 32.712421999999606
+    },
+    {
+      "mode": "Scan",
+      "shape": [
+        1000,
+        667,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 33.155396299999666,
+      "worker_finished_at": 35.89569929999925
+    }
+  ],
+  "published_trace": [
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 7.196231399999306,
+      "worker_finished_at": 18.409343199999967,
+      "published_at": 19.53659719999996,
+      "first_draw_at": 19.555152399999315,
+      "settled_draw_at": 21.703028699999777
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 22.01029070000004,
+      "worker_finished_at": 22.48112399999991,
+      "published_at": 22.491558699999587,
+      "first_draw_at": 22.499057099999845,
+      "settled_draw_at": 22.950775999999678
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 23.243506399999205,
+      "worker_finished_at": 23.639155299999402,
+      "published_at": 23.649196800000027,
+      "first_draw_at": 23.654300999999577,
+      "settled_draw_at": 24.102762299999995
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 24.396631899999193,
+      "worker_finished_at": 24.77431230000002,
+      "published_at": 24.784105499999896,
+      "first_draw_at": 24.789345299999695,
+      "settled_draw_at": 25.222676200000024
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 25.515794399999322,
+      "worker_finished_at": 25.94433140000001,
+      "published_at": 25.954360099999576,
+      "first_draw_at": 25.959576299999753,
+      "settled_draw_at": 26.390965899999173
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 26.683704699999907,
+      "worker_finished_at": 27.0705939999998,
+      "published_at": 27.080521699999736,
+      "first_draw_at": 27.085827899999458,
+      "settled_draw_at": 27.526046799999676
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.25,
+      "worker_started_at": 27.820253599999887,
+      "worker_finished_at": 28.230691799999477,
+      "published_at": 28.240538099999867,
+      "first_draw_at": 28.245738899999196,
+      "settled_draw_at": 28.646202699999776
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 28.95578690000002,
+      "worker_finished_at": 29.35569249999935,
+      "published_at": 29.36552429999938,
+      "first_draw_at": 29.3707402,
+      "settled_draw_at": 29.767058299999917
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 30.06079580000005,
+      "worker_finished_at": 30.43728419999934,
+      "published_at": 30.447203799999443,
+      "first_draw_at": 30.452391999999236,
+      "settled_draw_at": 30.90241909999986
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 1.5,
+      "worker_started_at": 31.193413099999816,
+      "worker_finished_at": 31.5990026999998,
+      "published_at": 31.608948699999928,
+      "first_draw_at": 31.61423459999969,
+      "settled_draw_at": 32.02054979999957
+    },
+    {
+      "mode": "Preview",
+      "shape": [
+        640,
+        426,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 32.330718199999865,
+      "worker_finished_at": 32.712421999999606,
+      "published_at": 32.72234379999918,
+      "first_draw_at": 32.7275740999994,
+      "settled_draw_at": 33.14080990000002
+    },
+    {
+      "mode": "Scan",
+      "shape": [
+        1000,
+        667,
+        3
+      ],
+      "exposure_ev": 0.0,
+      "worker_started_at": 33.155396299999666,
+      "worker_finished_at": 35.89569929999925,
+      "published_at": 36.92085119999956,
+      "first_draw_at": 36.94161499999973,
+      "settled_draw_at": 36.941615899999306
+    }
+  ],
+  "process_peaks": {
+    "working_set_bytes": 1520922624,
+    "commit_bytes": 1861120000
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "last_line": "5 failed, 829 passed, 11 warnings in 32.02s",
+    "failures": [
+      "FAILED tests/gui/test_layout.py::test_build_controls_panel_places_gamut_compression_sections_on_advanced_tab",
+      "FAILED tests/test_lut_mode.py::test_lut_mode_digest_disables_every_dangerous_effect",
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_gray_ramp16]",
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_fuji_crystal_gray_ramp16]",
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_green_patch8]"
+    ],
+    "log_sha256": "8340aaabcfcd7e86b1a8b89032862f1c20327159b36f208b6148995834d17162"
+  },
+  "cpu_full": {
+    "last_line": "3 failed, 869 passed, 11 warnings in 34.99s",
+    "failures": [
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_gray_ramp16]",
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_fuji_crystal_gray_ramp16]",
+      "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_green_patch8]"
+    ],
+    "log_sha256": "2b91d05073f5a946718b819a77bef1d9d282b488ee6a8e76d463c1ea40d76ba8"
+  },
+  "cpu_focused": {
+    "last_line": "224 passed in 7.65s",
+    "failures": [],
+    "log_sha256": "b02edb78ea7c0032f368cf6237b80499f4e6f61aff7995ac97fb2cb4606f24c7"
+  },
+  "cuda_focused": {
+    "last_line": "8 passed, 1 warning in 3.53s",
+    "failures": [],
+    "log_sha256": "15aacda64186c61493b9ba220218c143d3ef25598b77b5105776779aed9f6401"
+  }
+}

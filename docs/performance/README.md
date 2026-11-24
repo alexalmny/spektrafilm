@@ -1,6 +1,6 @@
 # Spektrafilm performance measurements
 
-Scope and gates: [performance roadmap](../PERFORMANCE_ROADMAP.md). Renderer baseline: `3bb2c2d`; the benchmark commit changes no runtime or profiles.
+Scope and gates: [performance roadmap](../PERFORMANCE_ROADMAP.md). Results and decision: [CPU/GUI and CUDA outcome](OUTCOME.md). Renderer baseline: `3bb2c2d`; the benchmark commit changes no runtime or profiles.
 
 ## Reproduce on Windows PowerShell
 
