@@ -82,7 +82,7 @@ def dump_params(params):
 
 
 def instrument(stack, timings):
-    from spektrafilm.model import develop
+    from spektrafilm.model import develop, grain
     from spektrafilm.runtime.stages import filming
     from spektrafilm.utils import gamut_compression as gamut
 
@@ -91,6 +91,13 @@ def instrument(stack, timings):
         'develop.density_interpolation': (develop, 'develop_simple'),
         'develop.couplers': (develop, 'apply_density_correction_dir_couplers'),
         'develop.grain': (develop, 'apply_grain'),
+        'grain.sublayer_interpolation': (grain, 'interp_density_cmy_layers'),
+        'grain.particles': (grain, 'layer_particle_model'),
+        'grain.fused_sampling': (grain, 'sample_grain_particles'),
+        'grain.poisson': (grain, 'fast_poisson'),
+        'grain.binomial': (grain, 'fast_binomial'),
+        'grain.gaussian': (grain, 'fast_gaussian_filter'),
+        'grain.lognormal': (grain, 'fast_lognormal_from_mean_std'),
         'gamut.cam16ucs': (gamut, 'compress_rgb_cam16ucs_chroma'),
         # Includes small whitepoint calls and boundary-table construction when it is cold.
         'cam16ucs.forward': (gamut.colour, 'XYZ_to_CAM16UCS'),
