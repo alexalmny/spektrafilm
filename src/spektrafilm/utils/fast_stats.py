@@ -2,6 +2,69 @@ import numpy as np
 from numba import njit, prange
 from math import sqrt, exp
 
+@njit(inline='always')
+def _binomial_sample(n, p):
+    if p <= 0.0:
+        return 0
+    if p >= 1.0:
+        return n
+    if n < 25:
+        count = 0
+        for _ in range(n):
+            if np.random.rand() < p:
+                count += 1
+        return count
+    mean = n * p
+    var = n * p * (1.0 - p)
+    if var > 10:
+        z = np.random.randn()
+        return min(n, max(0, int(np.round(mean + sqrt(var) * z))))
+
+    u = np.random.rand()
+    cdf = 0.0
+    prob = (1.0 - p) ** n
+    k = 0
+    while cdf < u and k <= n:
+        cdf += prob
+        if k < n:
+            prob = prob * ((n - k) / (k + 1)) * (p / (1.0 - p))
+        k += 1
+    return k - 1
+
+
+@njit(inline='always')
+def _poisson_sample(lam):
+    if lam <= 0.0:
+        return 0
+    if lam < 30.0:
+        limit = exp(-lam)
+        p = 1.0
+        k = 0
+        while p > limit:
+            k += 1
+            p *= np.random.rand()
+        return k - 1
+    z = np.random.randn()
+    return max(0, int(np.round(lam + sqrt(lam) * z)))
+
+
+@njit(parallel=True, cache=True)
+def sample_grain_particles(density, density_max, particles, uniformity):
+    result = np.empty(density.shape, dtype=np.float64)
+    od_particle = density_max / particles
+    for row in prange(density.shape[0]):
+        for col in range(density.shape[1]):
+            p = density[row, col] / density_max
+            if p < 1e-6:
+                p = 1e-6
+            elif p > 1 - 1e-6:
+                p = 1 - 1e-6
+            saturation = 1.0 - p * uniformity * (1 - 1e-6)
+            seeds = _poisson_sample(particles / saturation)
+            result[row, col] = _binomial_sample(seeds, p) * od_particle * saturation
+    return result
+
+
 @njit(parallel=True, cache=True)
 def fast_binomial(N_arr, p_arr):
     """
@@ -32,46 +95,8 @@ def fast_binomial(N_arr, p_arr):
     flat_N = N_arr.ravel()
     flat_p = p_arr.ravel()
     flat_result = result.ravel()
-    n_elements = flat_N.shape[0]
-    n_threshold = 25
-
-    for i in prange(n_elements):
-        n_val = flat_N[i]
-        p_val = flat_p[i]
-        if p_val <= 0.0:
-            flat_result[i] = 0
-        elif p_val >= 1.0:
-            flat_result[i] = n_val
-        else:
-            if n_val < n_threshold:
-                count = 0
-                for k in range(n_val):
-                    if np.random.rand() < p_val:
-                        count += 1
-                flat_result[i] = count
-            else:
-                mean = n_val * p_val
-                var = n_val * p_val * (1.0 - p_val)
-                if var > 10:
-                    z = np.random.randn()
-                    approx = mean + sqrt(var) * z
-                    approx_int = int(np.round(approx))
-                    if approx_int < 0:
-                        approx_int = 0
-                    elif approx_int > n_val:
-                        approx_int = n_val
-                    flat_result[i] = approx_int
-                else:
-                    u = np.random.rand()
-                    cdf = 0.0
-                    prob = (1.0 - p_val) ** n_val
-                    k = 0
-                    while cdf < u and k <= n_val:
-                        cdf += prob
-                        if k < n_val:
-                            prob = prob * ((n_val - k) / (k + 1)) * (p_val / (1.0 - p_val))
-                        k += 1
-                    flat_result[i] = k - 1
+    for i in prange(flat_N.size):
+        flat_result[i] = _binomial_sample(flat_N[i], flat_p[i])
     return result
 
 @njit(parallel=True, cache=True)
@@ -99,28 +124,8 @@ def fast_poisson(lam_arr):
     result = np.empty(lam_arr.shape, dtype=np.int64)
     flat_lam = lam_arr.ravel()
     flat_result = result.ravel()
-    n_elements = flat_lam.shape[0]
-    lam_threshold = 30.0
-
-    for i in prange(n_elements):
-        lam = flat_lam[i]
-        if lam <= 0.0:
-            flat_result[i] = 0
-        elif lam < lam_threshold:
-            L = exp(-lam)
-            p_val = 1.0
-            k = 0
-            while p_val > L:
-                k += 1
-                p_val *= np.random.rand()
-            flat_result[i] = k - 1
-        else:
-            z = np.random.randn()
-            sample = lam + sqrt(lam) * z
-            sample_int = int(np.round(sample))
-            if sample_int < 0:
-                sample_int = 0
-            flat_result[i] = sample_int
+    for i in prange(flat_lam.size):
+        flat_result[i] = _poisson_sample(flat_lam[i])
     return result
 
 @njit(parallel=True, cache=True)

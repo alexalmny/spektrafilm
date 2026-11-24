@@ -3,7 +3,7 @@ import scipy
 import scipy.ndimage
 from spektrafilm.model.density_curves import interp_density_cmy_layers
 from spektrafilm.runtime.params_schema import GrainParams
-from spektrafilm.utils.fast_stats import fast_binomial, fast_poisson, fast_lognormal_from_mean_std
+from spektrafilm.utils.fast_stats import fast_binomial, fast_poisson, fast_lognormal_from_mean_std, sample_grain_particles
 from spektrafilm.utils.fast_gaussian_filter import fast_gaussian_filter
 
 ################################################################################
@@ -22,28 +22,29 @@ def layer_particle_model(density,
     if seed is not None:
         np.random.seed(seed) # scipy uses np.random
     
-    probability_of_development = density/density_max
-    probability_of_development = np.clip(probability_of_development, 1e-6, 1-1e-6) # for safe calc
     od_particle = density_max/n_particles_per_pixel
+    if (method == 'poisson_binomial' and use_fast_stats and density.ndim == 2 and density.dtype == np.float64
+            and all(np.isscalar(v) and np.isfinite(v) for v in (density_max, n_particles_per_pixel, grain_uniformity))
+            and density_max > 0 and n_particles_per_pixel > 0 and 0 <= grain_uniformity <= 1):
+        grain = sample_grain_particles(density, density_max, n_particles_per_pixel, grain_uniformity)
+    else:
+        probability_of_development = density/density_max
+        probability_of_development = np.clip(probability_of_development, 1e-6, 1-1e-6) # for safe calc
     
-    grain = np.zeros_like(density)
-    if method=='gamma_beta':
-        gamma_rvs = scipy.stats.gamma.rvs
-        beta_rvs = scipy.stats.beta.rvs
-        seeds = gamma_rvs(n_particles_per_pixel/(1-grain_uniformity+1e-6), size=density.shape) * (1-grain_uniformity+1e-6)
-        grain = beta_rvs(probability_of_development*n_particles_per_pixel,
-                        (1-probability_of_development)*n_particles_per_pixel)*seeds*od_particle
-    elif method=='poisson_binomial':
-        if use_fast_stats:
-            binom_rvs = fast_binomial
-            poisson_rvs = fast_poisson
-        else:
-            binom_rvs = scipy.stats.binom.rvs
-            poisson_rvs = scipy.stats.poisson.rvs
-        saturation = 1 - probability_of_development*grain_uniformity*(1-1e-6)
-        seeds = poisson_rvs(n_particles_per_pixel/saturation)
-        grain = binom_rvs(seeds, probability_of_development)
-        grain = np.double(grain)*od_particle*saturation
+        grain = np.zeros_like(density)
+        if method=='gamma_beta':
+            gamma_rvs = scipy.stats.gamma.rvs
+            beta_rvs = scipy.stats.beta.rvs
+            seeds = gamma_rvs(n_particles_per_pixel/(1-grain_uniformity+1e-6), size=density.shape) * (1-grain_uniformity+1e-6)
+            grain = beta_rvs(probability_of_development*n_particles_per_pixel,
+                            (1-probability_of_development)*n_particles_per_pixel)*seeds*od_particle
+        elif method=='poisson_binomial':
+            saturation = 1 - probability_of_development*grain_uniformity*(1-1e-6)
+            poisson_rvs = fast_poisson if use_fast_stats else scipy.stats.poisson.rvs
+            binom_rvs = fast_binomial if use_fast_stats else scipy.stats.binom.rvs
+            seeds = poisson_rvs(n_particles_per_pixel/saturation)
+            grain = binom_rvs(seeds, probability_of_development)
+            grain = np.double(grain)*od_particle*saturation
     
     if blur_particle>0:
         # grain = scipy.ndimage.gaussian_filter(grain, blur_particle*np.sqrt(od_particle))

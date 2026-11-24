@@ -138,3 +138,31 @@ class TestApplyGrain:
         )
 
         np.testing.assert_allclose(result, expected, atol=1e-10)
+
+@pytest.mark.parametrize('p,particles', [(0.05, 12.0), (0.12, 40.0), (0.42, 90.0), (0.95, 150.0)])
+def test_fused_particle_model_preserves_distribution(p, particles):
+    from spektrafilm.model.grain import layer_particle_model
+    from spektrafilm.utils.fast_stats import fast_binomial, fast_poisson
+
+    maximum, uniformity = 2.2, 0.97
+    density = np.full((256, 768), p * maximum)[:, ::-2]
+    draws = np.full(density.shape, p)
+    saturation = 1 - draws * uniformity * (1 - 1e-6)
+    seeds = fast_poisson(particles / saturation)
+    reference = fast_binomial(seeds, draws) * (maximum / particles) * saturation
+    fused = layer_particle_model(density, density_max=maximum, n_particles_per_pixel=particles,
+                                 grain_uniformity=uniformity, use_fast_stats=True)
+
+    assert fused.dtype == np.float64 and fused.shape == density.shape
+    assert np.all(density == p * maximum)  # strided input was not modified
+    assert abs(fused.mean() - reference.mean()) <= 7 * reference.std() / np.sqrt(fused.size)
+    assert fused.std() == pytest.approx(reference.std(), rel=0.03)
+
+
+def test_fused_sampler_preserves_nonfinite_and_clipped_density():
+    from spektrafilm.utils.fast_stats import sample_grain_particles
+
+    density = np.tile([np.nan, -np.inf, np.inf], (32, 1))
+    result = sample_grain_particles(density, 2.2, 120.0, 0.97)
+    assert np.isnan(result[:, 0]).all()
+    assert np.isfinite(result[:, 1:]).all()
