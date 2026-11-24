@@ -2,6 +2,12 @@
 
 **Decision: keep the FP64 CPU and GUI changes. Do not integrate CUDA.** `performance-roadmap` is the delivery branch; the CuPy experiment remains on `performance-roadmap-cuda` (`8b7a09c` for the prototype), with no new GPU dependency in the normal install. The CPU passes both warm targets. GPU FP32 passes the measured color and 45 Mpx tests, but misses the 24 Mpx export and interactive preview speed gates.
 
+## Follow-up: fused CPU grain sampling
+
+`e669bf3` fuses the existing FP64 Poisson and binomial fast-stat paths per layer, removing intermediate arrays without changing the sampling algorithms or grain settings. Against the optimized CPU reference below, at 8 Numba threads the default print ran in 10.52 instead of 11.36 s at 6 Mpx, 39.30 instead of 42.69 s at 24 Mpx, and 77.38 instead of 84.77 s at 45 Mpx (two warm samples for the last candidate case). At 45 Mpx, peak process commit was 10.85 instead of 10.99 GiB, both full frames were finite, and the largest mean encoded RGB difference across channels was below 0.00002 with independent random draws. On repeated neutral patches at the 24 Mpx pixel pitch, grain RMS differed by at most 0.20% per channel.
+
+Validation also covered a 32.95 Mpx Sony ARW rendered as a Portra 400 negative (51.24 s on the one warm pass, and a re-opened 16-bit RGB TIFF), and Ektachrome 100 reversal film scanned directly at 6 Mpx. The full suite showed **874 passed and the same 3 inherited print snapshot failures**. No source photos or output images are published. The original CPU and GPU measurements below predate this follow-up.
+
 ## CPU and GUI
 
 Same Windows host, CPython 3.13.14, pinned dependencies, eight Numba threads, one BLAS thread, same actual sizes, stock/print and default effects. Drive cache and OS cache are not assumed cold. “First” below means a new process with an empty Numba disk-cache directory. The warm number is the median ± median absolute deviation over 10 previews or 3 scans in one simulator. Commit is the Windows process high-water commit, before display and export.
