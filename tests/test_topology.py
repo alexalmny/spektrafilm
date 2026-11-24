@@ -5,6 +5,8 @@ dispatcher's invariants in isolation.
 """
 from __future__ import annotations
 
+import weakref
+
 import pytest
 
 from spektrafilm.runtime.topology import Node, Tap, run_topology
@@ -104,3 +106,23 @@ class TestRunTopology:
         )
         assert result == (5 + 1) + (5 * 10)
         assert fired == ["produce_x", "produce_y", "combine"]
+
+    def test_releases_intermediate_after_its_last_reader(self):
+        class Frame:
+            pass
+
+        def produce(seed):
+            frame = Frame()
+            return frame, weakref.ref(frame)
+
+        def combine(ref, first, second):
+            assert ref() is None
+            return first + second
+
+        topology = [
+            Node(('a',), ('frame', 'ref'), produce),
+            Node(('frame',), ('first',), lambda frame: 1),
+            Node(('frame',), ('second',), lambda frame: 2),
+            Node(('ref', 'first', 'second'), ('out',), combine),
+        ]
+        assert run_topology(topology, 'a', 'out', 0) == 3

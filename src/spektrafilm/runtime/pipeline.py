@@ -112,10 +112,14 @@ class SimulationPipeline:
         self.timings.clear()
         start = perf_counter()
         try:
-            return run_topology(
+            result = run_topology(
                 self._topology, inject, collect, image,
                 on_fire=self._record_node_timing,
             )
+            # External callers historically received independent preprocessed pixels.
+            if inject == Tap.RGB_IN and collect == Tap.RGB_PRE and np.may_share_memory(image, result):
+                return result.copy()
+            return result
         finally:
             self._last_elapsed_time = perf_counter() - start
 
@@ -190,7 +194,7 @@ class SimulationPipeline:
         ]
 
     def _preprocess(self, image):
-        image = np.double(np.array(image)[:, :, 0:3])
+        image = np.asarray(np.asarray(image)[:, :, :3], dtype=np.float64)
         image = self._filming_stage.auto_exposure(image)
         image = self._resize_service.crop_and_rescale(image)
         return image

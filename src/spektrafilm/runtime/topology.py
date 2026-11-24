@@ -72,7 +72,8 @@ def run_topology(
     record per-node timings.
     """
     state: dict[str, Any] = {inject: image}
-    for node in topology:
+    last_read = {tap: i for i, node in enumerate(topology) for tap in node.reads}
+    for i, node in enumerate(topology):
         if all(k in state for k in node.reads):
             t0 = perf_counter()
             node.fire(state)
@@ -81,6 +82,9 @@ def run_topology(
                 on_fire(node, elapsed)
             if collect in state:
                 return state[collect]
+            for tap in node.reads:
+                if last_read[tap] == i:
+                    state.pop(tap, None)
     raise RuntimeError(
         f"no node path reaches tap {collect!r} from {inject!r}"
     )

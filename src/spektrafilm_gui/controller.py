@@ -703,10 +703,9 @@ class GuiController:
             source_layer_name=source_layer_name,
         )
 
-        image = np.double(image_data)
         request = SimulationRequest(
             mode_label=mode_label,
-            image=image,
+            image=image_data,
             params=params,
             output_color_space=state.simulation.io.output_color_space,
             use_display_transform=state.gui_only.display.use_display_transform,
