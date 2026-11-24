@@ -1,0 +1,8 @@
+{
+  "pixels_sampled": 843750,
+  "bernoulli_count": 7,
+  "normal_count": 665380,
+  "inversion_count": 178363,
+  "stalled_count": 13768,
+  "legacy_stalled_iterations": 39537957
+}

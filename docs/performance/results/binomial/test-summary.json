@@ -1,0 +1,14 @@
+{
+  "focused": "17 passed in 10.30s",
+  "full": "3 failed, 875 passed, 11 warnings in 24.92s",
+  "inherited_failures": [
+    "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_gray_ramp16]",
+    "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_fuji_crystal_gray_ramp16]",
+    "FAILED tests/test_regression_baselines.py::TestRegressionBaselines::test_pipeline_snapshot[print_rgb_portra_endura_green_patch8]"
+  ],
+  "seeded_exact": [
+    "binomial 176000 bit-exact",
+    "layer 10000 bit-exact",
+    "following 100 bit-exact"
+  ]
+}
