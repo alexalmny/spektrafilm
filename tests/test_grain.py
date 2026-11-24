@@ -166,3 +166,24 @@ def test_fused_sampler_preserves_nonfinite_and_clipped_density():
     result = sample_grain_particles(density, 2.2, 120.0, 0.97)
     assert np.isnan(result[:, 0]).all()
     assert np.isfinite(result[:, 1:]).all()
+
+
+def test_binomial_underflow_preserves_result_and_rng_position():
+    from numba import njit
+    from spektrafilm.utils.fast_stats import _binomial_sample
+
+    n, p = 30_000, 0.999999
+    assert n * p * (1.0 - p) <= 10 and (1.0 - p) ** n == 0.0
+
+    @njit
+    def sample_and_next():
+        np.random.seed(123)
+        sample = _binomial_sample(n, p)
+        next_draw = np.random.rand()
+        np.random.seed(123)
+        np.random.rand()  # The original inverse CDF consumes exactly one draw.
+        return sample, next_draw, np.random.rand()
+
+    sample, next_draw, expected_next = sample_and_next()
+    assert sample == n
+    assert next_draw == expected_next

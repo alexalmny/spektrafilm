@@ -22,12 +22,17 @@ def _binomial_sample(n, p):
 
     u = np.random.rand()
     cdf = 0.0
-    prob = (1.0 - p) ** n
+    failure = 1.0 - p
+    prob = failure ** n
+    # Once the mass underflows, the old loop walks to n without changing its CDF.
+    if prob == 0.0 and u > 0.0:
+        return n
+    ratio = p / failure
     k = 0
     while cdf < u and k <= n:
         cdf += prob
         if k < n:
-            prob = prob * ((n - k) / (k + 1)) * (p / (1.0 - p))
+            prob = prob * ((n - k) / (k + 1)) * ratio
         k += 1
     return k - 1
 
