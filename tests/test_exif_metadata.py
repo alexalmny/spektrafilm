@@ -208,6 +208,48 @@ def test_save_image_oiio_skips_icc_when_profile_missing(tmp_path, monkeypatch):
     assert embedded is None
 
 
+def test_linear_exr_preserves_hdr_without_icc_or_exif(tmp_path):
+    import OpenImageIO as oiio
+
+    path = str(tmp_path / 'scan.exr')
+    pixels = np.array([[[-0.125, 0.18, 2.25], [0., 1., 4.]]], dtype=np.float32)
+    save_image_oiio(path, pixels, color_space='ProPhoto RGB', cctf_encoding=False)
+    write_image_metadata(path, _build_source_metadata(), saving_color_space='ProPhoto RGB', saving_cctf_encoding=False)
+    image = oiio.ImageInput.open(path)
+    try:
+        assert str(image.spec().format) == 'half'
+        assert image.spec().getattribute('ICCProfile') is None
+        assert image.spec().getattribute('Exif:LensModel') is None
+        np.testing.assert_array_equal(image.read_image(), pixels.astype(np.float16))
+    finally:
+        image.close()
+
+
+def test_tiff_retains_real_icc_pixels_and_source_exif_after_metadata_copy(tmp_path):
+    import OpenImageIO as oiio
+
+    path = str(tmp_path / 'scan.tif')
+    pixels = np.array([[[-0.125, 0.18, 2.25], [0., 1., 0.5]]], dtype=np.float64)
+    save_image_oiio(path, pixels, color_space='ProPhoto RGB')
+    write_image_metadata(path, _build_source_metadata(), saving_color_space='ProPhoto RGB')
+    image = oiio.ImageInput.open(path)
+    try:
+        assert str(image.spec().format) == 'uint16'
+        profile = bytes(image.spec().getattribute('ICCProfile'))
+        assert profile[36:40] == b'acsp'
+        assert profile == io_module._load_icc_profile('ProPhoto RGB', True)
+        np.testing.assert_array_equal(image.read_image(oiio.UINT16), (np.clip(pixels, 0, 1) * 65535).astype(np.uint16))
+    finally:
+        image.close()
+    metadata = read_image_metadata(path)
+    exif = _read_tags(metadata.exif)
+    assert exif['Exif.Image.Make'] == 'Canon'
+    assert exif['Exif.Photo.LensModel'] == 'Canon EF 50mm f/1.8 STM'
+    assert exif['Exif.Image.Orientation'] == '1'
+    assert exif['Exif.Photo.ColorSpace'] == '65535'
+    assert _read_tags(metadata.xmp)['Xmp.photoshop.ICCProfile'] == 'ProPhoto RGB'
+
+
 def test_write_metadata_without_source_still_writes_overrides(tmp_path):
     destination_path = tmp_path / "no_source.jpg"
 
