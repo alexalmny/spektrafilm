@@ -95,7 +95,8 @@ def compare(before, after, color_space, encoded, rows=128):
             'displayable_pixels_compared': compared, 'finite_elements_compared': finite_count,
             'linear_rgb_max_abs': max_error if finite_count else None,
             'linear_rgb_rmse': (square_error / finite_count)**0.5 if finite_count else None,
-            'counts': counts, 'displayable_delta_e00_D65': de00, 'worst_displayable_pixels': worst,
+            'counts': {name: int(value) for name, value in counts.items()},
+            'displayable_delta_e00_D65': de00, 'worst_displayable_pixels': worst,
             'fp32_perceptual_threshold_met': bool(de00 and all(de00[p] <= limit for p, limit in FP32_DE00_LIMITS.items()))}
 
 

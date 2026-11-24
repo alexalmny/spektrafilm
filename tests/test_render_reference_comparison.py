@@ -1,3 +1,5 @@
+import json
+
 import colour
 import numpy as np
 import pytest
@@ -24,6 +26,7 @@ def test_comparison_decodes_rgb_and_separates_hdr_nan_and_clip_metrics():
     assert report['displayable_pixels_compared'] == 2
     assert report['worst_displayable_pixels'][0]['xy'] == [2, 0]
     assert not report['fp32_perceptual_threshold_met']
+    assert json.loads(json.dumps(report, allow_nan=False))['counts'] == counts
 
 
 def test_identical_aces_reference_has_zero_colour_error_after_d65_conversion():

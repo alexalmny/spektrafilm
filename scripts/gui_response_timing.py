@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import platform
 import statistics
@@ -43,7 +44,8 @@ def run(args):
         while not predicate() and not errors and now() < until:
             QtTest.QTest.qWait(5)
         if errors or not predicate():
-            raise RuntimeError(f'{label}: {errors or "timed out (no matching canvas draw)"}')
+            detail = errors or f'timed out; recent workers={requests[-3:]}, published={frames[-3:]}'
+            raise RuntimeError(f'{label}: {detail}')
 
     with patch.object(app, 'load_default_gui_state', project_state), \
          patch.object(QtWidgets.QMessageBox, 'critical', lambda *call: errors.append(str(call[-1]))):
@@ -81,7 +83,7 @@ def run(args):
 
         def rendered_since(first, mode, *, exposure=None):
             return next((f for f in reversed(frames[first:]) if f['mode'] == mode
-                         and (exposure is None or f['exposure_ev'] == exposure)
+                         and (exposure is None or math.isclose(f['exposure_ev'], exposure, abs_tol=1e-9))
                          and 'settled_draw_at' in f), None)
 
         def latency(frame, since):
@@ -108,15 +110,18 @@ def run(args):
                 for i in range(args.warm):
                     first, workers_before = len(frames), len(requests)
                     edits = []
-                    for tick in range(1, 7):
+                    def edit():
+                        tick = len(edits) + 1
                         target = anchor + (tick if i % 2 == 0 else 6 - tick) * step
-                        def edit(target=target):
-                            edits.append(now())
-                            editor.setValue(target)
-                        QtCore.QTimer.singleShot((tick - 1) * 25, edit)
+                        edits.append(now())
+                        editor.setValue(target)
+                        if tick < 6:
+                            QtCore.QTimer.singleShot(25, edit)
+                    edit()
                     wait_for(lambda: len(edits) == 6, 'slider events')
                     exposure = editor.value
-                    wait_for(lambda: rendered_since(first, 'Preview', exposure=exposure), 'final slider preview')
+                    wait_for(lambda: rendered_since(first, 'Preview', exposure=exposure),
+                             f'final slider preview ({exposure:g} EV)')
                     frame = rendered_since(first, 'Preview', exposure=exposure)
                     samples.append(dict(latency(frame, edits[-1]), exposure_ev=exposure,
                                         edit_span_seconds=edits[-1] - edits[0],
