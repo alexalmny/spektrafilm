@@ -66,4 +66,14 @@ This is the repository TIFF at full native resolution for the GUI scan (1000 × 
 
 ## Inherited tests
 
-The unmodified checkout reproduced **829 passed, 5 failed** under Qt offscreen with the environment above before benchmark changes. The failures are a layout test double with a stale `addWidget` signature, a `lut_mode` test reading the absent `GrainParams.mult_usm_amount`, and the three print snapshots `print_rgb_portra_endura_gray_ramp16`, `print_rgb_fuji_crystal_gray_ramp16`, and `print_rgb_portra_endura_green_patch8`. The snapshots and their tolerances have not been changed; their cause still needs verification.
+The unmodified checkout reproduced **829 passed, 5 failed** under Qt offscreen. The layout test double (container, stretch and action bar) and the `lut_mode` assert on the nonexistent `GrainParams.mult_usm_amount` were test-only fixes. Grain remains covered by the original disabled-effect and deterministic-render assertions.
+
+Three inherited print snapshots remain open **pending approval to rebaseline**. They predate two intentional rendering changes:
+
+- `cd254ba` (parent of `6ec371b`): all five snapshots pass, both with the pinned environment and with NumPy 2.4.6 / SciPy 1.17.1 / Numba 0.64.0 / colour-science 0.4.6, on the same Python 3.13.14.
+- `6ec371b`: changing the lightness roll-off from two-sided to black-anchored makes the two neutral print ramps divergent. Maximum encoded RGB errors are 0.007131 (Portra/Endura) and 0.008971 (Fuji/Crystal Archive); the green patch still passes.
+- `6deeec3` changes the default perceptual gamut algorithm from OkLCh to CAM16-UCS. At `83278a5` and `3bb2c2d`, the same three cases fail with respective maxima 0.007131, 0.009070, and 0.05176. Forcing only OkLCh in a diagnostic run at `3bb2c2d` restores the green snapshot and reproduces exactly the two earlier ramp errors (including their mean errors). The older dependencies reproduce all three failures at `3bb2c2d` as well.
+
+The stored `.npz` files, their tolerance, and the current default renderer are unchanged. Reproduce the matrix above with `python -m pytest -q tests/test_regression_baselines.py --tb=short` on the named revisions in a clean worktree. The two pre-scan snapshots still pass. The performance parity checks use deterministic `3bb2c2d` output with the current CAM16-UCS and lightness settings, not stale `.npz` print pixels.
+
+The seven new regressions for the spectral cache fail on unmodified `3bb2c2d` and pass with the fixes. They cover resolution changes in both directions, individual min/max bound changes (in-place as well as through parameter updates), an intermediate tap, stock changes, and alternation between negative and print against a fresh simulator.
