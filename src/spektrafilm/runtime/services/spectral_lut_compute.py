@@ -23,16 +23,14 @@ class SpectralLUTService:
 
         # external memory
         self.filming_tc_lut_memory : np.ndarray | None = None # tc_lut memory
-        self.enlarger_lut_memory : np.ndarray | None = None # enlarger lut memory
-        self.scanner_lut_memory : np.ndarray | None = None # scanner lut memory
+        self._spectral_luts: dict[str, tuple[tuple[np.ndarray, ...], np.ndarray]] = {}
 
         # local memory
         self._film_sensitivity = None # to track if tc_lut needs to be recomputed when film sensitivity changes
         self._cached_filming_adaptation = None # full adaptation state for which the cached tc_lut was computed
         self._cached_input_gamut_compress: InputGamutCompressSpec | None = None
-        self._enlarger_test_results_memory = None # to test if enlarger LUTs are identical for same input
-        self._scanner_test_results_memory = None # to test if scanner LUTs are identical for same input
-        
+
+        # shortcut: probes identify the built-in spectral transforms; use explicit keys if adding arbitrary transforms.
         self._cmy_test_values = np.array([[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
                                           [[0.7, 0.8, 0.9], [1.0, 1.1, 1.2]]]) # to test if LUTs are identical
 
@@ -97,34 +95,7 @@ class SpectralLUTService:
         *,
         use_lut: bool = False,
     ):
-        if not use_lut:
-            return spectral_calculation(cmy_data)
-
-        test_results = spectral_calculation(np.array(self._cmy_test_values))
-
-        if (
-            self.enlarger_lut_memory is not None
-            and self._enlarger_test_results_memory is not None
-            and np.array_equal(test_results, self._enlarger_test_results_memory)
-        ):
-            data_out, _ = compute_with_lut(cmy_data,
-                                           spectral_calculation,
-                                           xmin=data_min,
-                                           xmax=data_max,
-                                           steps=self._lut_resolution,
-                                           lut=self.enlarger_lut_memory)
-        else:
-            data_out, lut = compute_with_lut(cmy_data,
-                                             spectral_calculation,
-                                             xmin=data_min,
-                                             xmax=data_max,
-                                             steps=self._lut_resolution)
-            self.enlarger_lut_memory = lut
-            self._enlarger_test_results_memory = np.array(test_results, copy=True)
-
-        if data_out is None:
-            raise RuntimeError('LUT computation did not produce an output')
-        return data_out
+        return self._spectral_compute('enlarger', cmy_data, spectral_calculation, data_min, data_max, use_lut)
 
     @timeit("spectral_compute_scanner")
     def spectral_compute_scanner(self,
@@ -135,33 +106,22 @@ class SpectralLUTService:
         *,
         use_lut: bool = False,
     ):
+        return self._spectral_compute('scanner', cmy_data, spectral_calculation, data_min, data_max, use_lut)
+
+    def _spectral_compute(self, stage, cmy_data, spectral_calculation, data_min, data_max, use_lut):
         if not use_lut:
             return spectral_calculation(cmy_data)
 
-        test_results = spectral_calculation(np.array(self._cmy_test_values))
-
-        if (
-            self.scanner_lut_memory is not None
-            and self._scanner_test_results_memory is not None
-            and np.array_equal(test_results, self._scanner_test_results_memory)
-        ):
-            data_out, _ = compute_with_lut(cmy_data,
-                                           spectral_calculation,
-                                           xmin=data_min,
-                                           xmax=data_max,
-                                           steps=self._lut_resolution,
-                                           lut=self.scanner_lut_memory)
-        else:
-            data_out, lut = compute_with_lut(cmy_data,
-                                             spectral_calculation,
-                                             xmin=data_min,
-                                             xmax=data_max,
-                                             steps=self._lut_resolution)
-            self.scanner_lut_memory = lut
-            self._scanner_test_results_memory = np.array(test_results, copy=True)
-
+        # The same transform sampled over a different domain is a different cube.
+        key = (data_min, data_max, spectral_calculation(self._cmy_test_values.copy()))
+        cached_key, cached_lut = self._spectral_luts.get(stage, ((), None))
+        hit = cached_lut is not None and all(np.array_equal(a, b) for a, b in zip(key, cached_key))
+        data_out, lut = compute_with_lut(cmy_data, spectral_calculation, xmin=data_min, xmax=data_max,
+                                         steps=self._lut_resolution, lut=cached_lut if hit else None)
         if data_out is None:
             raise RuntimeError('LUT computation did not produce an output')
+        if not hit:
+            self._spectral_luts[stage] = (tuple(np.array(value, copy=True) for value in key), lut)
         return data_out
 
     @timeit("get_filming_tc_lut")

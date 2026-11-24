@@ -8,6 +8,8 @@ from spektrafilm import AgXPhoto, Simulator, photo_params, simulate
 from spektrafilm.model.stocks import FilmStocks, PrintPapers
 from spektrafilm.runtime import pipeline as pipeline_module
 from spektrafilm.runtime import process as process_module
+from spektrafilm.runtime.topology import Tap
+from tests.conftest import make_fast_test_params
 
 
 pytestmark = pytest.mark.integration
@@ -88,6 +90,53 @@ class TestRuntimeApi:
             rebuilt = process_module.Simulator(rebuilt_params).process(image)
 
             np.testing.assert_allclose(soft_updated, rebuilt, atol=1e-12)
+
+    def test_update_rebuilds_spectral_luts_at_new_resolution(self, small_rgb_image, default_params):
+        p = default_params
+        p.settings.use_enlarger_lut = p.settings.use_scanner_lut = True
+        p.settings.lut_resolution = 17
+        simulator = Simulator(p)
+        original = simulator.process(small_rgb_image)
+
+        for resolution in (33, 17):
+            p.settings.lut_resolution = resolution
+            simulator.update_params(p)
+            reused = simulator.process(small_rgb_image)
+            fresh = Simulator(p).process(small_rgb_image)
+            np.testing.assert_array_equal(reused, fresh)
+            if resolution == 33:
+                assert np.max(np.abs(fresh - original)) > 1e-7  # Fixture exercises interpolation.
+
+    @pytest.mark.parametrize('collect', [Tap.LOG_E_PRINT, Tap.RGB_OUT])
+    def test_reused_spectral_luts_match_fresh_simulator_across_edits(self, small_rgb_image, collect):
+        def params(stock, paper, negative, altered_domain):
+            p = make_fast_test_params(film_profile=stock, print_profile=paper)
+            p.settings.use_enlarger_lut = p.settings.use_scanner_lut = True
+            p.io.scan_film = negative
+            p.taps.collect = collect
+            if altered_domain:
+                p.film_render.grain.density_min = (0.25, 0.1, 0.15)
+            return p
+
+        base = ('kodak_gold_200', 'kodak_supra_endura')
+        alternate = ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii')
+        simulator = Simulator(params(*base, False, False))
+        simulator.process(small_rgb_image)
+        updates = [(*base, False, True), (*alternate, False, True),
+                   (*alternate, False, False), (*base, False, False)]
+        if collect == Tap.RGB_OUT:
+            updates.insert(2, (*alternate, True, False))
+            updates.insert(3, (*alternate, True, True))
+            updates.append((*base, True, False))
+            updates.append((*base, False, False))
+
+        for variant in updates:
+            changed = params(*variant)
+            simulator.update_params(changed)
+            np.testing.assert_array_equal(
+                simulator.process(small_rgb_image), Simulator(changed).process(small_rgb_image),
+                err_msg=f'update sequence {variant!r} at {collect}',
+            )
 
     def test_simulate_prints_pipeline_timings(self, monkeypatch, capsys):
         class FakePipeline:

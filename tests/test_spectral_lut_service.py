@@ -42,3 +42,32 @@ def test_filming_tc_lut_recomputes_when_spectral_gaussian_blur_changes(monkeypat
 
     assert calls == [0.0, 4.0]
     assert np.array_equal(first, second) is False
+
+
+@pytest.mark.parametrize('stage', ['enlarger', 'scanner'])
+@pytest.mark.parametrize('changed_bound', ['min', 'max'])
+def test_spectral_lut_rebuilds_if_only_density_domain_changes(stage, changed_bound):
+    service_type = spectral_lut_compute_module.SpectralLUTService
+    compute = getattr(service_type(9), f'spectral_compute_{stage}')
+    fresh = getattr(service_type(9), f'spectral_compute_{stage}')
+    data = np.array([[[0.2, 0.35, 0.7], [0.6, 0.5, 0.3]]])
+    bounds = {'min': np.zeros(3), 'max': np.ones(3)}
+    calls = []
+
+    def spectral_calculation(cmy):
+        calls.append(cmy.shape)
+        return cmy * np.array([2., 3., 4.])
+
+    before = compute(data, spectral_calculation, bounds['min'], bounds['max'], use_lut=True)
+    np.testing.assert_array_equal(
+        compute(data, spectral_calculation, bounds['min'], bounds['max'], use_lut=True), before,
+    )
+    assert calls.count((81, 9, 3)) == 1  # Unchanged bounds reuse the cube.
+
+    # The caller may mutate the original bounds after the cache has seen them.
+    bounds[changed_bound][1] += -0.25 if changed_bound == 'min' else 0.25
+    updated = compute(data, spectral_calculation, bounds['min'], bounds['max'], use_lut=True)
+    assert calls.count((81, 9, 3)) == 2
+    np.testing.assert_array_equal(
+        updated, fresh(data, spectral_calculation, bounds['min'], bounds['max'], use_lut=True),
+    )

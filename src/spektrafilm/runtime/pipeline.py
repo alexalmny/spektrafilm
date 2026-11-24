@@ -136,7 +136,8 @@ class SimulationPipeline:
 
     def update(self, params):
         """Update params and re-initialize stages that depend on them."""
-        self.__init__(params, update_params=True)
+        same_resolution = params.settings.lut_resolution == self.settings.lut_resolution
+        self.__init__(params, update_params=same_resolution)
 
     def soft_update(self,
                     exposure_compensation_ev=None,
