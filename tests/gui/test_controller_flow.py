@@ -62,7 +62,7 @@ def _run_simulation_case(
     monkeypatch.setattr(controller_module, 'collect_gui_state', lambda *, widgets: gui_state)
     monkeypatch.setattr(controller_module, 'build_params_from_state', lambda state: object())
 
-    def fake_process_image_with_runtime(image, _params):
+    def fake_process_image_with_runtime(image, _params, *, apply_stock_specifics):
         captured['processing_input'] = image.copy()
         return simulated_image.copy()
 
@@ -89,7 +89,9 @@ def _run_simulation_case(
     monkeypatch.setattr(controller, '_set_or_add_output_layer', fake_set_or_add_output_layer)
     monkeypatch.setattr(controller_module, 'set_status', lambda *args, **kwargs: None)
 
-    controller._run_simulation(source_layer_name=source_layer_name)
+    monkeypatch.setattr(controller._thread_pool, "start", lambda worker: worker.run())
+    mode = "Preview" if source_layer_name == INPUT_PREVIEW_LAYER_NAME else "Scan"
+    controller._start_simulation(source_layer_name=source_layer_name, mode_label=mode)
     return captured
 
 
@@ -534,7 +536,7 @@ def test_start_simulation_reports_persistent_computing_status(monkeypatch) -> No
     assert captured['status'] == ('Computing preview...', 0)
     assert captured['white_padding'] == gui_state.gui_only.display.white_padding
     assert controller._active_simulation_label == 'Preview'
-    np.testing.assert_allclose(captured['worker']._request.image, np.double(preview_image))
+    assert captured['worker']._request.image is preview_image
 
 
 def test_start_simulation_skips_computing_status_for_silent_preview(monkeypatch) -> None:
@@ -562,64 +564,7 @@ def test_start_simulation_skips_computing_status_for_silent_preview(monkeypatch)
     assert captured['white_padding'] == gui_state.gui_only.display.white_padding
     assert controller._active_simulation_label == 'Preview'
     assert controller._active_simulation_reports_status is False
-    np.testing.assert_allclose(captured['worker']._request.image, np.double(preview_image))
-
-
-def test_request_auto_preview_schedules_once_and_runs_preview(monkeypatch) -> None:
-    simulation_section = SimpleNamespace(auto_preview_value=lambda: True)
-    controller = GuiController(viewer=object(), widgets=SimpleNamespace(simulation=simulation_section))
-    controller._current_preview_image = np.full((2, 2, 3), 0.25, dtype=np.float32)
-    captured: dict[str, object] = {}
-
-    def fake_single_shot(delay_ms, callback):
-        captured.setdefault('scheduled', []).append((delay_ms, callback))
-
-    monkeypatch.setattr(controller_module.QTimer, 'singleShot', staticmethod(fake_single_shot))
-    monkeypatch.setattr(
-        controller,
-        '_run_preview',
-        lambda *, report_status: captured.setdefault('preview_runs', []).append(report_status),
-    )
-
-    controller.request_auto_preview()
-    controller.request_auto_preview()
-
-    assert len(captured['scheduled']) == 1
-    scheduled_delay, scheduled_callback = captured['scheduled'][0]
-    assert scheduled_delay == 0
-
-    scheduled_callback()
-
-    assert captured['preview_runs'] == [False]
-
-
-def test_request_auto_preview_replays_after_active_simulation(monkeypatch) -> None:
-    simulation_section = SimpleNamespace(auto_preview_value=lambda: True)
-    controller = GuiController(viewer=object(), widgets=SimpleNamespace(simulation=simulation_section))
-    controller._current_preview_image = np.full((2, 2, 3), 0.25, dtype=np.float32)
-    controller._active_simulation_worker = object()
-    captured: dict[str, object] = {}
-
-    monkeypatch.setattr(controller_module.QTimer, 'singleShot', staticmethod(lambda delay_ms, callback: captured.setdefault('scheduled', []).append((delay_ms, callback))))
-    monkeypatch.setattr(
-        controller,
-        '_run_preview',
-        lambda *, report_status: captured.setdefault('preview_runs', []).append(report_status),
-    )
-
-    controller.request_auto_preview()
-    scheduled_callback = captured['scheduled'][0][1]
-    scheduled_callback()
-
-    assert controller._pending_auto_preview is True
-    assert 'preview_runs' not in captured
-
-    controller._active_simulation_worker = None
-    controller._replay_pending_auto_preview()
-    replay_callback = captured['scheduled'][1][1]
-    replay_callback()
-
-    assert captured['preview_runs'] == [False]
+    assert captured['worker']._request.image is preview_image
 
 
 def test_refresh_preview_cache_recomputes_cached_preview_without_hiding_visible_output(monkeypatch) -> None:
@@ -748,7 +693,7 @@ def test_execute_simulation_request_routes_through_runtime_simulator_path(monkey
     )
     captured: dict[str, object] = {}
 
-    def fake_process_image_with_runtime(image, params):
+    def fake_process_image_with_runtime(image, params, *, apply_stock_specifics):
         captured['runtime_call'] = (image.copy(), params)
         return np.full((2, 2, 3), 0.5, dtype=np.float32)
 
@@ -846,11 +791,12 @@ def test_process_image_with_runtime_reapplies_stock_specific_digest_after_profil
     controller._next_runtime_digest_applies_stock_specifics = True
     monkeypatch.setattr(controller_module, 'digest_params', fake_digest_params)
 
-    result = controller._process_image_with_runtime(image, params)
+    result = controller._process_image_with_runtime(image, params, apply_stock_specifics=True)
 
     assert captured['digest_flags'] == [True]
     assert captured['updated'] == [digested_params]
-    assert controller._next_runtime_digest_applies_stock_specifics is False
+    # The worker consumes its flag snapshot, not a flag set by a newer UI edit.
+    assert controller._next_runtime_digest_applies_stock_specifics is True
     np.testing.assert_allclose(result, image + 0.2)
 
 
@@ -898,3 +844,146 @@ def test_on_simulation_finished_skips_completed_status_for_silent_preview(monkey
 
     assert 'status_calls' not in captured
     assert controller._active_simulation_reports_status is True
+
+
+@pytest.fixture
+def preview_queue(monkeypatch):
+    viewer = FakeViewer()
+    auto = SimpleNamespace(enabled=True)
+    button_events = []
+    simulation = SimpleNamespace(auto_preview_value=lambda: auto.enabled, save_button=SimpleNamespace(setEnabled=button_events.append))
+    controller = GuiController(viewer=viewer, widgets=SimpleNamespace(simulation=simulation))
+    assert controller._auto_preview_timer.isSingleShot()
+    assert controller._auto_preview_timer.interval() == controller_module.AUTO_PREVIEW_DEBOUNCE_MS
+    assert 120 <= controller._auto_preview_timer.interval() <= 180
+    timer = SimpleNamespace(active=False, starts=0)
+
+    def start():
+        timer.active = True
+        timer.starts += 1
+
+    def expire():
+        timer.stop()
+        controller._run_scheduled_auto_preview()
+
+    timer.start = start
+    timer.stop = lambda: setattr(timer, 'active', False)
+    timer.isActive = lambda: timer.active
+    controller._auto_preview_timer = timer
+    gui_state = make_test_controller_gui_state()
+    controller._current_input_path = 'original.tif'
+    controller._current_input_image = np.full((8, 6, 3), 0.3, dtype=np.float32)
+    controller._current_preview_image = controller._current_input_image[::2, ::2]
+    workers, errors, statuses = [], [], []
+    monkeypatch.setattr(controller._thread_pool, 'start', workers.append)
+    monkeypatch.setattr(controller_module, 'collect_gui_state', lambda **unused: gui_state)
+    monkeypatch.setattr(controller_module, 'build_params_from_state', lambda state: SimpleNamespace(
+        settings=SimpleNamespace(preview_mode=False), exposure=state.camera.exposure_compensation_ev,
+    ))
+    monkeypatch.setattr(controller_module, 'set_status', lambda viewer, message, **kwargs: statuses.append(message))
+    monkeypatch.setattr(controller_module.QMessageBox, 'critical', lambda parent, title, message: errors.append(message))
+    monkeypatch.setattr(controller, '_process_image_with_runtime', lambda image, params, **kwargs: image * (1 + params.exposure))
+    monkeypatch.setattr(controller, '_prepare_output_display_image', lambda image, **kwargs: (np.uint8(image * 255), 'Display test'))
+    return SimpleNamespace(controller=controller, state=gui_state, timer=timer, expire=expire, workers=workers,
+                           errors=errors, buttons=button_events, statuses=statuses, auto=auto)
+
+
+def test_auto_preview_debounces_edits_and_drops_stale_inflight_result(preview_queue):
+    q = preview_queue
+    c = q.controller
+    for exposure in (0.1, 0.2, 0.3):
+        q.state.camera.exposure_compensation_ev = exposure
+        c.request_auto_preview()
+    assert q.timer.starts == 3 and not q.workers
+    q.expire()
+    assert q.workers[0]._request.params.exposure == 0.3
+    assert q.workers[0]._request.apply_stock_specifics
+    q.state.camera.exposure_compensation_ev = 0.4
+    c.request_auto_preview()
+    q.state.camera.exposure_compensation_ev = 0.5
+    c.request_auto_preview()
+    assert q.timer.active
+    q.expire()
+    assert len(q.workers) == 1  # No simultaneous simulation.
+    assert q.workers[0]._request.params.exposure == 0.3
+    q.workers[0].run()
+    assert c._output_layer() is None
+    assert len(q.workers) == 2
+    assert q.workers[1]._request.params.exposure == 0.5
+    assert not q.workers[1]._request.apply_stock_specifics
+    q.workers[1].run()
+    np.testing.assert_array_equal(c._output_layer_float_data(), c._current_preview_image * 1.5)
+
+
+@pytest.mark.parametrize('replace_image', ['load', 'rotate'])
+def test_inflight_scan_from_old_image_is_never_published(preview_queue, monkeypatch, replace_image):
+    q = preview_queue
+    c = q.controller
+    c.run_scan()
+    old = c._current_input_image
+    assert q.workers[0]._request.image is old
+    monkeypatch.setattr(c, '_resize_for_preview', lambda image, **kwargs: image[::2, ::2])
+    monkeypatch.setattr(c, '_prepare_input_color_preview_image', lambda image, **kwargs: image)
+    monkeypatch.setattr(controller_module, 'load_image_oiio', lambda path: np.zeros((12, 8, 3), dtype=np.float32))
+    if replace_image == 'rotate':
+        c.rotate_input_image_clockwise()
+        assert any(stride < 0 for stride in c._current_input_image.strides)
+    else:
+        c.load_input_image('new.tif')
+    q.expire()
+    q.workers[0].run()
+    assert c._output_layer() is None
+    assert q.workers[1]._request.image is c._current_preview_image
+    q.workers[1].run()
+    assert c._output_layer_float_data().shape == c._current_preview_image.shape
+
+
+def test_pending_auto_preview_cannot_replace_manual_scan_at_export(preview_queue, monkeypatch):
+    q = preview_queue
+    c = q.controller
+    c.run_scan()
+    q.state.camera.exposure_compensation_ev = 1.0
+    c.request_auto_preview()
+    q.expire()
+    q.workers[0].run()
+    assert not c._pending_auto_preview
+    assert len(q.workers) == 1
+    assert c._output_layer_float_data().shape == c._current_input_image.shape
+
+    saving_space = q.state.simulation.workflow.saving_color_space
+    q.state.simulation.io.output_color_space = saving_space
+    c._output_layer().metadata[controller_module.OUTPUT_COLOR_SPACE_KEY] = saving_space
+    q.state.simulation.workflow.saving_cctf_encoding = True
+    writes = []
+    metadata = []
+    dialog = SimpleNamespace(get_save_file_name=lambda *args: ('scan.tif', ''))
+    monkeypatch.setattr(controller_module, '_DirMemoryDialog', lambda *args: dialog)
+    monkeypatch.setattr(controller_module, 'save_image_oiio', lambda path, image, **kwargs: writes.append((path, image.copy())))
+    monkeypatch.setattr(controller_module, 'read_image_metadata', lambda source: metadata.append(source))
+    monkeypatch.setattr(controller_module, 'write_image_metadata', lambda *args, **kwargs: None)
+    c.save_output_layer()
+    assert writes[0][0] == 'scan.tif'
+    np.testing.assert_array_equal(writes[0][1], c._current_input_image)
+    assert metadata == ['original.tif']
+
+
+def test_worker_failure_reenables_controls_and_next_preview_succeeds(preview_queue, monkeypatch):
+    q = preview_queue
+    c = q.controller
+    execute = c._process_image_with_runtime
+
+    def failed(*args, **kwargs):
+        raise MemoryError('test allocation')
+
+    monkeypatch.setattr(c, '_process_image_with_runtime', failed)
+    c.run_scan()
+    q.workers[0].run()
+    assert len(q.errors) == 1 and 'test allocation' in q.errors[0]
+    assert q.buttons == [False, True]
+    assert c._active_simulation_worker is None
+    monkeypatch.setattr(c, '_process_image_with_runtime', execute)
+    c.request_auto_preview()
+    q.expire()
+    q.workers[1].run()
+    assert c._output_layer() is not None
+    assert q.buttons[-2:] == [False, True]

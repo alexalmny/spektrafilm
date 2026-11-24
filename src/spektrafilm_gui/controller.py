@@ -46,6 +46,7 @@ QMessageBox = QtWidgets.QMessageBox
 SimulationRequest = runtime.SimulationRequest
 SimulationResult = runtime.SimulationResult
 STARTUP_PREVIEW_ASPECT_RATIO = (3, 2)
+AUTO_PREVIEW_DEBOUNCE_MS = 150
 
 
 class _DirMemoryDialog:
@@ -134,8 +135,9 @@ PILImage = _LazyModuleProxy(_import_pil_image_module)
 ImageCms = _LazyModuleProxy(_import_imagecms_module)
 
 
-class GuiController:
+class GuiController(QtCore.QObject):
     def __init__(self, *, viewer: napari.Viewer, widgets: WidgetBundle):
+        super().__init__()
         self._viewer = viewer
         self._widgets = widgets
         self._layers = ViewerLayerService(
@@ -153,7 +155,13 @@ class GuiController:
         self._current_input_image: np.ndarray | None = None
         self._current_input_path: str | None = None
         self._current_preview_image: np.ndarray | None = None
-        self._auto_preview_scheduled = False
+        self._image_generation = 0
+        self._preview_generation = 0
+        self._active_generation = (0, 0)
+        self._auto_preview_timer = QTimer(self)
+        self._auto_preview_timer.setSingleShot(True)
+        self._auto_preview_timer.setInterval(AUTO_PREVIEW_DEBOUNCE_MS)
+        self._auto_preview_timer.timeout.connect(self._run_scheduled_auto_preview)
         self._pending_auto_preview = False
         self._active_simulation_reports_status = True
 
@@ -285,10 +293,12 @@ class GuiController:
         self._start_simulation(source_layer_name=INPUT_LAYER_NAME, mode_label='Scan')
 
     def request_auto_preview(self, *_args) -> None:
-        if self._auto_preview_scheduled:
-            return
-        self._auto_preview_scheduled = True
-        QTimer.singleShot(0, self._run_scheduled_auto_preview)
+        self._preview_generation += 1
+        if self._auto_preview_enabled() and self._current_preview_image is not None:
+            self._pending_auto_preview = True
+            self._auto_preview_timer.start()
+        else:
+            self._cancel_auto_preview()
 
     def _request_auto_preview_if_enabled(self) -> None:
         if not self._auto_preview_enabled() or self._current_preview_image is None:
@@ -500,6 +510,9 @@ class GuiController:
             input_color_space=state.input_image.io.input_color_space,
             apply_cctf_decoding=state.input_image.io.input_cctf_decoding,
         )
+        if image is not self._current_input_image:
+            self._image_generation += 1
+        self._preview_generation += 1
         self._current_input_image = image
         self._current_preview_image = preview_image
         self._layers.set_or_add_input_preview_layer(
@@ -533,21 +546,23 @@ class GuiController:
         auto_preview_value = getattr(simulation_section, 'auto_preview_value', None)
         return bool(auto_preview_value()) if callable(auto_preview_value) else False
 
+    def _cancel_auto_preview(self) -> None:
+        self._auto_preview_timer.stop()
+        self._pending_auto_preview = False
+
     def _run_scheduled_auto_preview(self) -> None:
-        self._auto_preview_scheduled = False
         if not self._auto_preview_enabled() or self._current_preview_image is None:
-            self._pending_auto_preview = False
-            return
-        if self._active_simulation_worker is not None:
-            self._pending_auto_preview = True
-            return
-        self._run_preview(report_status=False)
+            self._cancel_auto_preview()
+        elif self._pending_auto_preview and self._active_simulation_worker is None:
+            self._run_preview(report_status=False)
 
     def _replay_pending_auto_preview(self) -> None:
-        if not self._pending_auto_preview:
-            return
-        self._pending_auto_preview = False
-        self.request_auto_preview()
+        if self._pending_auto_preview and not self._auto_preview_timer.isActive():
+            self._run_scheduled_auto_preview()
+
+    def _render_is_stale(self, mode_label: str) -> bool:
+        image, preview = self._active_generation
+        return image != self._image_generation or (mode_label == 'Preview' and preview != self._preview_generation)
 
     def _output_layer(self) -> NapariImageLayer | None:
         return self._layers.output_layer()
@@ -626,21 +641,13 @@ class GuiController:
             pil_image_module=PILImage,
         )
 
-    def _process_image_with_runtime(self, image_data: np.ndarray, params) -> np.ndarray:
-        apply_stocks_specifics = (
-            self._runtime_simulator is None
-            or self._next_runtime_digest_applies_stock_specifics
-        )
-        digested_params = digest_params(
-            params,
-            apply_stocks_specifics=apply_stocks_specifics,
-        )
+    def _process_image_with_runtime(self, image_data: np.ndarray, params, *, apply_stock_specifics=False) -> np.ndarray:
         try:
+            digested = digest_params(params, apply_stocks_specifics=self._runtime_simulator is None or apply_stock_specifics)
             if self._runtime_simulator is None:
-                self._runtime_simulator = runtime_simulator(digested_params)
+                self._runtime_simulator = runtime_simulator(digested)
             else:
-                self._runtime_simulator.update_params(digested_params)
-            self._next_runtime_digest_applies_stock_specifics = False
+                self._runtime_simulator.update_params(digested)
             return self._runtime_simulator.process(image_data)
         except Exception:
             self._runtime_simulator = None
@@ -675,7 +682,9 @@ class GuiController:
     def _execute_simulation_request(self, request: SimulationRequest) -> SimulationResult:
         return runtime.execute_simulation_request(
             request,
-            run_simulation_fn=self._process_image_with_runtime,
+            run_simulation_fn=lambda image, params: self._process_image_with_runtime(
+                image, params, apply_stock_specifics=request.apply_stock_specifics,
+            ),
             prepare_output_display_image_fn=self._prepare_output_display_image,
         )
 
@@ -709,7 +718,12 @@ class GuiController:
             params=params,
             output_color_space=state.simulation.io.output_color_space,
             use_display_transform=state.gui_only.display.use_display_transform,
+            apply_stock_specifics=self._next_runtime_digest_applies_stock_specifics,
         )
+        self._next_runtime_digest_applies_stock_specifics = False
+        if mode_label == 'Preview':
+            self._cancel_auto_preview()
+        self._active_generation = (self._image_generation, self._preview_generation)
 
         worker = runtime.SimulationWorker(request, execute_request=self._execute_simulation_request)
         worker.signals.finished.connect(self._on_simulation_finished)
@@ -722,12 +736,17 @@ class GuiController:
             set_status(self._viewer, f'Computing {mode_label.lower()}...', timeout_ms=0)
         self._thread_pool.start(worker)
 
+    @QtCore.Slot(object)
     def _on_simulation_finished(self, result: SimulationResult) -> None:
-        report_status = self._active_simulation_reports_status
-        self._active_simulation_worker = None
-        self._active_simulation_label = None
-        self._active_simulation_reports_status = True
-        self._set_simulation_controls_enabled(True)
+        report_status = self._end_simulation()
+        if self._render_is_stale(result.mode_label):
+            if report_status:
+                set_status(self._viewer, f'{result.mode_label} discarded: input or settings changed')
+            self._replay_pending_auto_preview()
+            return
+        if result.mode_label == 'Scan':
+            # Keep the full scan as the displayed/exportable result until another edit or render.
+            self._cancel_auto_preview()
         self._set_or_add_output_layer(
             result.display_image,
             float_image=result.float_image,
@@ -739,15 +758,22 @@ class GuiController:
             set_status(self._viewer, f'{result.mode_label} completed. {result.status_message}')
         self._replay_pending_auto_preview()
 
+    @QtCore.Slot(str)
     def _on_simulation_failed(self, message: str) -> None:
-        self._active_simulation_worker = None
         mode_label = self._active_simulation_label or 'Simulation'
+        self._end_simulation()
+        if not self._render_is_stale(mode_label):
+            QMessageBox.critical(dialog_parent(self._viewer), 'Run simulation', f'Simulation failed.\n\n{message}')
+            set_status(self._viewer, f'{mode_label} failed')
+        self._replay_pending_auto_preview()
+
+    def _end_simulation(self) -> bool:
+        report_status = self._active_simulation_reports_status
+        self._active_simulation_worker = None
         self._active_simulation_label = None
         self._active_simulation_reports_status = True
         self._set_simulation_controls_enabled(True)
-        QMessageBox.critical(dialog_parent(self._viewer), 'Run simulation', f'Simulation failed.\n\n{message}')
-        set_status(self._viewer, f'{mode_label} failed')
-        self._replay_pending_auto_preview()
+        return report_status
 
     def _set_simulation_controls_enabled(self, enabled: bool) -> None:
         simulation_section = getattr(self._widgets, 'simulation', None)
@@ -758,32 +784,3 @@ class GuiController:
             set_enabled = getattr(button, 'setEnabled', None)
             if callable(set_enabled):
                 set_enabled(enabled)
-
-    def _run_simulation(self, *, source_layer_name: str) -> None:
-        image_data = self._simulation_input_image(source_layer_name=source_layer_name)
-        if image_data is None:
-            QMessageBox.warning(dialog_parent(self._viewer), 'Run simulation', 'Load an input image before running the simulation.')
-            return
-
-        state = collect_gui_state(widgets=self._widgets)
-        self._sync_white_border(white_padding=state.gui_only.display.white_padding)
-        params = self._configure_simulation_params(
-            build_params_from_state(state),
-            source_layer_name=source_layer_name,
-        )
-
-        image = np.double(image_data)
-        scan = self._process_image_with_runtime(image, params)
-        scan_display, display_status = self._prepare_output_display_image(
-            scan,
-            output_color_space=state.simulation.io.output_color_space,
-            use_display_transform=state.gui_only.display.use_display_transform,
-        )
-        self._set_or_add_output_layer(
-            scan_display,
-            float_image=scan,
-            output_color_space=state.simulation.io.output_color_space,
-            output_cctf_encoding=True,
-            use_display_transform=state.gui_only.display.use_display_transform,
-        )
-        set_status(self._viewer, display_status)

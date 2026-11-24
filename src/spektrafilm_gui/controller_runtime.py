@@ -21,6 +21,7 @@ class SimulationRequest:
     params: object
     output_color_space: str
     use_display_transform: bool
+    apply_stock_specifics: bool = False
 
 
 @dataclass(slots=True)
@@ -48,7 +49,7 @@ class SimulationWorker(QRunnable):
     def run(self) -> None:
         try:
             result = self._execute_request(self._request)
-        except (AttributeError, LookupError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        except Exception as exc:
             self.signals.failed.emit(f'{type(exc).__name__}: {exc}')
             return
         self.signals.finished.emit(result)
@@ -193,20 +194,20 @@ def prepare_output_display_image(
 ) -> tuple[np.ndarray, str]:
     del padding_pixels
     normalized_image = normalized_image_data(np.asarray(image_data)[..., :3])
-    preview_image = np.uint8(np.clip(normalized_image, 0.0, 1.0) * 255)
-    if not use_display_transform:
-        return preview_image, display_transform_status_message(False, imagecms_module=imagecms_module)
-    try:
-        transformed_image, status = apply_display_transform(
-            normalized_image,
-            output_color_space=output_color_space,
-            colour_module=colour_module,
-            imagecms_module=imagecms_module,
-            pil_image_module=pil_image_module,
-        )
-        return transformed_image, status
-    except (OSError, ValueError, TypeError, imagecms_module.PyCMSError):
-        return preview_image, 'Display transform: transform failed, using raw preview'
+    if use_display_transform:
+        try:
+            return apply_display_transform(
+                normalized_image,
+                output_color_space=output_color_space,
+                colour_module=colour_module,
+                imagecms_module=imagecms_module,
+                pil_image_module=pil_image_module,
+            )
+        except (OSError, ValueError, TypeError, imagecms_module.PyCMSError):
+            status = 'Display transform: transform failed, using raw preview'
+    else:
+        status = display_transform_status_message(False, imagecms_module=imagecms_module)
+    return np.uint8(np.clip(normalized_image, 0.0, 1.0) * 255), status
 
 
 def execute_simulation_request(
