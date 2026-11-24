@@ -1123,6 +1123,44 @@ def compress_rgb_cam16ucs_chroma(
     power: float,
     lightness_compression: tuple[float, float, float] | None = None,
 ) -> np.ndarray:
+    """CAM16-UCS chroma reduction to the output RGB cube."""
+    rgb = np.asarray(rgb, dtype=float)
+    options = dict(threshold=threshold, limit=limit, power=power, lightness_compression=lightness_compression)
+    # Preserve Colour's nonstandard global domain or unsigned-power modes.
+    if (rgb.size >= 3 * 4096 and rgb.shape[-1] == 3
+            and colour.get_domain_range_scale() == 'reference' and colour.algebra.is_spow_enabled()):
+        from spektrafilm.utils import _cam16ucs
+
+        xyz_w = _output_cs_whitepoint_xyz(output_color_space)
+        matrices = _cam16ucs.prepare(output_color_space, xyz_w, _CAM16UCS_L_A, _CAM16UCS_Y_B)
+        J_grid, h_grid, table = _get_output_c_max_table('cam16ucs', output_color_space)
+        J_white = _cam16ucs_white_Jp(output_color_space) if lightness_compression is not None else 0.0
+        flat = rgb.reshape(-1, 3)
+        result, invalid = _cam16ucs.compress(
+            flat, *matrices, (threshold, limit, power), lightness_compression or (0.0, 0.0, 0.0), J_white,
+            J_grid[0], J_grid[-1], h_grid[0], h_grid[1] - h_grid[0], table,
+        )
+        if 0 < invalid < len(flat):
+            special = ~np.isfinite(result).all(axis=1)
+            pixels = np.empty((invalid + 1, 3))
+            pixels[:-1] = flat[special]
+            # Colour rejects an all-NaN chroma batch; retain a valid pixel as in the full image.
+            pixels[-1] = flat[special.argmin()]
+            result[special] = _compress_rgb_cam16ucs_reference(pixels, output_color_space, **options)[:-1]
+        if invalid < len(flat):
+            return result.reshape(rgb.shape)
+    return _compress_rgb_cam16ucs_reference(rgb, output_color_space, **options)
+
+
+def _compress_rgb_cam16ucs_reference(
+    rgb: np.ndarray,
+    output_color_space: str,
+    *,
+    threshold: float,
+    limit: float,
+    power: float,
+    lightness_compression: tuple[float, float, float] | None = None,
+) -> np.ndarray:
     """CAM16-UCS chroma reduction to the output RGB cube.
 
     Same algorithm shape as :func:`compress_rgb_oklch_chroma` but in
