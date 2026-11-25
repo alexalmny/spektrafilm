@@ -15,4 +15,13 @@ First-pass times are not comparable because the two disk caches had different co
 
 With one Numba thread and the same explicitly seeded generator, 176,000 direct binomial draws across all branches and 10,000 FP64 fused particle draws on strided input matched bit-for-bit. The following 100 draws matched as well. The regression test checks that the zero-start shortcut still consumes exactly one uniform draw. The full candidate suite had 875 passes and only the 3 inherited print-snapshot failures. No new binary or source photo is tracked.
 
-This is a local candidate, not the code on `origin/main`. Before promoting it, repeat the 45 Mpx scan and the alternate-stock RAW case. To reproduce the timing, use `scripts/runtime_process_timing.py 6mp --json <file>` (or `24mp --warm 2`) from each revision in the pinned environment described in [README.md](README.md).
+## Promotion checks
+
+| Case | Warm engine | Fused particle sampling | Peak process commit |
+|---|---:|---:|---:|
+| 45 Mpx Gold 200 / Supra Endura print (2 baseline, 3 optimized repeats) | 77.383 → 75.666 s (−2.2%) | 12.773 → 10.664 s | 10.85 → 11.00 GiB |
+| 32.95 Mpx Sony RAW, Ektachrome 100 direct scan (2 repeats each) | 66.069 → 50.953 s (−22.9%) | 23.733 → 8.867 s | 8.52 → 8.41 GiB |
+
+The 45 Mpx baseline uses `531a557` (same renderer as deployed `9f5f22f`); the RAW baseline and candidate were rerun in fresh processes. Inputs, settings, packages and threads were matched, and the first pass is excluded. All four saved FP64 frames were finite; maximum absolute frame mean RGB delta was below `1.75e-5` over independent noise draws. Both Sony TIFFs reopened as 7028 × 4688 RGB uint16 with the expected encoded ProPhoto ICC and EXIF orientation/dimensions. The full candidate suite again passed 875 tests with only the three inherited snapshots failing. No private images are tracked. These checks gate promotion of `525d694` to `main`.
+
+To reproduce timing, use `scripts/runtime_process_timing.py 6mp --json <file>` (or `24mp --warm 2` / `45mp --warm 3`) in the pinned environment described in [README.md](README.md). For the Sony case use `raw --mode negative --warm 2 --reference --export --raw <file>` and select `kodak_ektachrome_100` when initializing the film in `params_for`. The release artifacts and checks are under [results/binomial](results/binomial/).
